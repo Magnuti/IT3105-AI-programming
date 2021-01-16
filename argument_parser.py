@@ -4,11 +4,11 @@ import argparse
 class Arguments():
 
     # For example
-    # python .\argument_parser.py --board triangle --size 3 --cell_positions 2 3 4 --episodes 10 --critic table
+    # python .\argument_parser.py --board diamond --size 3 --cell_positions 2 3 4 --episodes 10 --critic table
 
     def parse_arguments(self):
         # Triangle/diamond
-        # Board size
+        # Board size (4-8 for triangle, 3-6 for diamond)
         # Open cells position, can be multiple
         # Number of episodes
         # Table or NN for critic
@@ -60,8 +60,20 @@ class Arguments():
 
         args = parser.parse_args()
 
+        if(args.board == "triangle"):
+            if(args.size < 4 or args.size > 8):
+                parser.error("Triangle boards must be of size [4-8]")
+        else:
+            if(args.size < 3 or args.size > 6):
+                parser.error("Diamond boards must be of size [3-6]")
+
         if(args.critic == "nn" and not args.nn_dim):
             parser.error("--nn_dim is required when --critic = nn")
+
+        for x in args.cell_positions:
+            if(x >= args.size**2):
+                parser.error(
+                    "Cell position {0} is too large for a board of size {1}x{1}".format(x, args.size))
 
         self.board = args.board
         self.board_size = args.size
