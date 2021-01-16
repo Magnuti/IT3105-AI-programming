@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from math import sqrt
 
 from argument_parser import Arguments
 
@@ -8,7 +9,14 @@ def dict_print(d):
         print("{}: {}".format(key, value))
 
 
-def visualize_hex_triangle(cell_positions, board_size):
+def init_board(cell_positions, board_size):
+    board = [1 for i in range(board_size**2)]
+    for i in cell_positions:
+        board[i] = 0
+    return board
+
+
+def visualize_hex_triangle(board):
     '''
     Visualize a left-shift triangle.
     First element is top row, 2nd and 3rd element is second row etc.
@@ -21,7 +29,13 @@ def visualize_hex_triangle(cell_positions, board_size):
     pass
 
 
-def visualize_hex_diamond(cell_positions, board_size):
+def visualize_hex_diamond(board):
+    board_size = sqrt(len(board))
+    if not board_size.is_integer():
+        print("Invalid board size")
+
+    board_size = int(board_size)
+
     x = 0
     y = 0
     x_coordinates = []
@@ -29,21 +43,20 @@ def visualize_hex_diamond(cell_positions, board_size):
     x_coordinates_open_cells = []
     y_coordinates_open_cells = []
 
-    cell_counter = 0
     for i in range(board_size):
         x = i * -0.5
         y = -i
         for j in range(board_size):
             x += 0.5
             y -= 1
-            if(cell_counter in cell_positions):
+            if(board[i * board_size + j] == 0):
                 x_coordinates_open_cells.append(x)
                 y_coordinates_open_cells.append(y)
-            else:
+            elif(board[i * board_size + j] == 1):
                 x_coordinates.append(x)
                 y_coordinates.append(y)
-
-            cell_counter += 1
+            else:
+                print("Unknown board cell")
 
     plt.plot(x_coordinates, y_coordinates, 'o', color="black")
     plt.plot(x_coordinates_open_cells,
@@ -111,9 +124,11 @@ def find_neighbor_cells_diamond(board_size):
 if __name__ == "__main__":
     arguments = Arguments()
     arguments.parse_arguments()
+
+    board = init_board(arguments.cell_positions, arguments.board_size)
+
     if(arguments.board == "triangle"):
-        visualize_hex_triangle(arguments.cell_positions, arguments.board_size)
+        visualize_hex_triangle(board)
     else:
-        visualize_hex_diamond(arguments.cell_positions, arguments.board_size)
+        visualize_hex_diamond(board)
         neighbors = find_neighbor_cells_diamond(arguments.board_size)
-        dict_print(neighbors)
