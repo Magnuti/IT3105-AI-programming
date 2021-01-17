@@ -1,7 +1,9 @@
 import argparse
 
+from constants import BoardType
 
-class Arguments():
+
+class Arguments:
 
     # For example
     # python .\argument_parser.py --board diamond --size 3 --cell_positions 2 3 4 --episodes 10 --critic table
@@ -36,7 +38,7 @@ class Arguments():
 
         parser = argparse.ArgumentParser()
         parser.add_argument("-b", "--board", help="triangle or diamond board", type=str,
-                            choices=["triangle", "diamond"], required=True)
+                            choices=[e.value for e in BoardType], required=True)
         parser.add_argument("--size", help="Board size",
                             type=int, required=True)
         parser.add_argument(
@@ -60,12 +62,14 @@ class Arguments():
 
         args = parser.parse_args()
 
-        if(args.board == "triangle"):
+        if(args.board == BoardType.Triangle.value):
             if(args.size < 4 or args.size > 8):
                 parser.error("Triangle boards must be of size [4-8]")
-        else:
+        elif(args.board == BoardType.Diamond.value):
             if(args.size < 3 or args.size > 6):
                 parser.error("Diamond boards must be of size [3-6]")
+        else:
+            raise NotImplementedError()
 
         if(args.critic == "nn" and not args.nn_dim):
             parser.error("--nn_dim is required when --critic = nn")
@@ -75,7 +79,7 @@ class Arguments():
                 parser.error(
                     "Cell position {0} is too large for a board of size {1}x{1}".format(x, args.size))
 
-        self.board = args.board
+        self.board = BoardType(args.board)
         self.board_size = args.size
         self.cell_positions = args.cell_positions
         self.episodes = args.episodes
