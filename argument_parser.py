@@ -1,6 +1,6 @@
 import argparse
 
-from constants import BoardType
+from constants import BoardType, CriticType
 
 
 class Arguments:
@@ -28,12 +28,11 @@ class Arguments:
         self.episodes = 1
         self.learning_rate_critic = 1.0
         self.learning_rate_actor = 1.0
-        self.eligibility_decay_critic = 1.0
-        self.eligibility_decay_actor = 1.0
-        self.discound_factor_critic = 1.0
-        self.discound_factor_actor = 1.0
-        self.epsilon = 1.0
-        self.visualization = False
+        self.eligibility_decay_critic = 0.9
+        self.eligibility_decay_actor = 0.9
+        self.discount_factor_critic = 0.9
+        self.discount_factor_actor = 0.9
+        self.epsilon = 0.5
         self.frame_time = 1.0
 
         parser = argparse.ArgumentParser()
@@ -46,7 +45,7 @@ class Arguments:
         parser.add_argument(
             "--episodes", help="Number of episodes", type=int, required=True)
         parser.add_argument("--critic", help="Type of critic",
-                            choices=["table", "nn"], required=True)
+                            choices=[e.value for e in CriticType], required=True)
         parser.add_argument(
             "--nn_dim", help="List of dimension of the critic's NN on the form 10 15 1", type=int, nargs="*")
         parser.add_argument(
@@ -57,8 +56,16 @@ class Arguments:
             "--ed_critic", help="Eligibility decay critic", type=float, default=self.eligibility_decay_critic)
         parser.add_argument(
             "--ed_actor", help="Eligibility decay actor", type=float, default=self.eligibility_decay_actor)
+        parser.add_argument("--df_critic", help="Discount factor critic",
+                            type=float, default=self.discount_factor_critic)
+        parser.add_argument("--df_actor", help="Discount factor actor",
+                            type=float, default=self.discount_factor_actor)
         parser.add_argument("--epsilon", help="Epsilon value",
                             type=float, default=self.epsilon)
+        parser.add_argument(
+            "--visualize", help="Set the --visualization flag to enable visualization", action="store_true")
+        parser.add_argument(
+            "--frame_time", help="The frame rate for the visualization", type=float, default=self.frame_time)
 
         args = parser.parse_args()
 
@@ -71,7 +78,7 @@ class Arguments:
         else:
             raise NotImplementedError()
 
-        if(args.critic == "nn" and not args.nn_dim):
+        if(args.critic == CriticType.NEURAL_NETWORK and not args.nn_dim):
             parser.error("--nn_dim is required when --critic = nn")
 
         for x in args.cell_positions:
@@ -79,17 +86,29 @@ class Arguments:
                 parser.error(
                     "Cell position {0} is too large for a board of size {1}x{1}".format(x, args.size))
 
+        if(args.df_critic * args.ed_critic >= 1.0):
+            parser.error(
+                "γλ > 1 is not allowed for critic (i.e. discount factor * eligibility decay must be below 1)")
+
+        if(args.df_actor * args.ed_actor >= 1.0):
+            parser.error(
+                "γλ > 1 is not allowed for actor (i.e. discount factor * eligibility decay must be below 1)")
+
         self.board = BoardType(args.board)
         self.board_size = args.size
         self.cell_positions = args.cell_positions
         self.episodes = args.episodes
-        self.critic_type = args.critic
+        self.critic_type = CriticType(args.critic)
         self.nn_dim = args.nn_dim
         self.learning_rate_critic = args.lr_critic
         self.learning_rate_actor = args.lr_actor
         self.eligibility_decay_critic = args.ed_critic
         self.eligibility_decay_actor = args.ed_actor
+        self.discount_factor_critic = args.df_critic
+        self.discount_factor_actor = args.df_actor
         self.epsilon = args.epsilon
+        self.visualize = args.visualize
+        self.frame_time = args.frame_time
 
     def __str__(self):
         x = "Arguments: {\n"
