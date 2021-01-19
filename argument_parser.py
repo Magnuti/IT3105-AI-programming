@@ -6,7 +6,8 @@ from constants import BoardType, CriticType
 class Arguments:
 
     # For example
-    # python .\argument_parser.py --board diamond --size 3 --cell_positions 2 3 4 --episodes 10 --critic table
+    # python .\argument_parser.py --board_type diamond --size 3 --open_cell_positions 2 3 4 --episodes 10 --critic table
+    # python main.py --board_type diamond --size 3 --open_cell_positions 2 3 4 --episodes 10 --critic table --visualize
 
     def parse_arguments(self):
         # Triangle/diamond
@@ -36,12 +37,12 @@ class Arguments:
         self.frame_time = 1.0
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("-b", "--board", help="triangle or diamond board", type=str,
+        parser.add_argument("-b", "--board_type", help="triangle or diamond board", type=str,
                             choices=[e.value for e in BoardType], required=True)
         parser.add_argument("--size", help="Board size",
                             type=int, required=True)
         parser.add_argument(
-            "--cell_positions", help="List of open cell positions on the form 2 4 5 ...", type=int, required=True, nargs="*")
+            "--open_cell_positions", help="List of open cell positions on the form 2 4 5 ...", type=int, required=True, nargs="*")
         parser.add_argument(
             "--episodes", help="Number of episodes", type=int, required=True)
         parser.add_argument("--critic", help="Type of critic",
@@ -69,13 +70,13 @@ class Arguments:
 
         args = parser.parse_args()
 
-        if(args.board == BoardType.Triangle.value):
+        if(args.board_type == BoardType.Triangle.value):
             if(args.size < 4 or args.size > 8):
                 parser.error("Triangle boards must be of size [4-8]")
-        elif(args.board == BoardType.Diamond.value):
+        elif(args.board_type == BoardType.Diamond.value):
             if(args.size < 3 or args.size > 6):
                 parser.error("Diamond boards must be of size [3-6]")
-            if(args.size == 4 and len(args.cell_positions) == 1 and (args.cell_positions[0] == 5 or args.cell_positions[0] == 10)):
+            if(args.size == 4 and len(args.open_cell_positions) == 1 and (args.open_cell_positions[0] == 5 or args.open_cell_positions[0] == 10)):
                 print(
                     "WARNING: A diamond board of size 4 can only be solved with center positions 6 or 9, not 5 or 10.")
         else:
@@ -84,7 +85,7 @@ class Arguments:
         if(args.critic == CriticType.NEURAL_NETWORK and not args.nn_dim):
             parser.error("--nn_dim is required when --critic = nn")
 
-        for x in args.cell_positions:
+        for x in args.open_cell_positions:
             if(x >= args.size**2):
                 parser.error(
                     "Cell position {0} is too large for a board of size {1}x{1}".format(x, args.size))
@@ -97,9 +98,9 @@ class Arguments:
             parser.error(
                 "γλ > 1 is not allowed for actor (i.e. discount factor * eligibility decay must be below 1)")
 
-        self.board = BoardType(args.board)
+        self.board_type = BoardType(args.board_type)
         self.board_size = args.size
-        self.cell_positions = args.cell_positions
+        self.open_cell_positions = args.open_cell_positions
         self.episodes = args.episodes
         self.critic_type = CriticType(args.critic)
         self.nn_dim = args.nn_dim

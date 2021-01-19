@@ -5,17 +5,6 @@ import networkx as nx
 from constants import *
 
 
-class Cell:
-    def __init__(self, status, position, index):
-        self.status = status
-        # self.position = position
-        self.index = index
-        self.neighbors = []
-
-    def setNeighbors(self, CellList):
-        self.neighbors = CellList
-
-
 def plot_performance(remaining_pegs_list):
     plt.plot(remaining_pegs_list)
     plt.show()

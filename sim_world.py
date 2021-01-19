@@ -3,34 +3,45 @@ from argument_parser import Arguments
 from visualization import visualize_board
 
 
+class Cell:
+    def __init__(self, status, position, index):
+        self.status = status
+        # self.position = position
+        self.index = index
+        self.neighbors = []
+
+    def setNeighbors(self, CellList):
+        self.neighbors = CellList
+
+
 class SimWorld:
-    def __init__(self, board_type, cell_positions, board_size):
+    def __init__(self, board_type, open_cell_positions, board_size):
         self.board_type = board_type
         self.board_size = board_size
-        self.cell_positions = cell_positions
+        self.open_cell_positions = open_cell_positions
 
-        self.__init_board(board_type, cell_positions, board_size)
+        self.__init_board(board_type, open_cell_positions, board_size)
         self.__init_neighbor_cells(board_type, board_size)
 
         # TODO check if init board has valid IN_PROGRESS status
         self.current_state_status = StateStatus.IN_PROGRESS
 
-    def __init_board(self, board_type, cell_positions, board_size):
+    def __init_board(self, board_type, open_cell_positions, board_size):
         if(board_type == BoardType.Triangle):
             self.current_state = self.__init_triangle_board(
-                cell_positions, board_size)
+                open_cell_positions, board_size)
         elif(board_type == BoardType.Diamond):
             self.current_state = self.__init_diamond_board(
-                cell_positions, board_size)
+                open_cell_positions, board_size)
         else:
             raise NotImplementedError()
 
-    def __init_triangle_board(self, cell_positions, board_size):
+    def __init_triangle_board(self, open_cell_positions, board_size):
         raise NotImplementedError()
 
-    def __init_diamond_board(self, cell_positions, board_size):
+    def __init_diamond_board(self, open_cell_positions, board_size):
         board = [1 for i in range(board_size**2)]
-        for i in cell_positions:
+        for i in open_cell_positions:
             board[i] = 0
         return board
 
@@ -101,7 +112,7 @@ class SimWorld:
 
     def reset_board(self):
         self.__init_board(
-            self.board_type, self.cell_positions, self.board_size)
+            self.board_type, self.open_cell_positions, self.board_size)
 
     def pick_new_state(self, state):
         # ? Check if state is in child_states maybe for security
@@ -163,9 +174,25 @@ class SimWorld:
         return child_states, child_states_with_visualization
 
 
-if __name__ == "__main__":
-    args = Arguments()
-    args.parse_arguments()
+def coordinates_to_1D_index(coordinates, board_type, board_size):
+    for coordinate in coordinates:
+        print(coordinate)
+        try:
+            if len(coordinate) != 2:
+                raise ValueError(
+                    'open_cell_positions must contain coordinates of length 2')
+        except TypeError:
+            raise TypeError(
+                'open_cell_positions must contain coordinates of length 2')
+    if board_type == BoardType.Triangle:
+        pass
+    return
 
-    sim_world = SimWorld(args.board, args.cell_positions, args.board_size)
-    visualize_board(sim_world.board_type, sim_world.current_state)
+
+# if __name__ == "__main__":
+    # args = Arguments()
+    # args.parse_arguments()
+
+    # sim_world = SimWorld(
+    #     args.board_type, args.open_cell_positions, args.board_size)
+    # visualize_board(sim_world.board_type, sim_world.current_state)
