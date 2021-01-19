@@ -174,21 +174,6 @@ class SimWorld:
         return child_states, child_states_with_visualization
 
 
-def coordinates_to_1D_index(coordinates, board_type, board_size):
-    for coordinate in coordinates:
-        print(coordinate)
-        try:
-            if len(coordinate) != 2:
-                raise ValueError(
-                    'open_cell_positions must contain coordinates of length 2')
-        except TypeError:
-            raise TypeError(
-                'open_cell_positions must contain coordinates of length 2')
-    if board_type == BoardType.Triangle:
-        pass
-    return
-
-
 # if __name__ == "__main__":
     # args = Arguments()
     # args.parse_arguments()

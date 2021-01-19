@@ -1,12 +1,11 @@
 # [triangle, diamond]
-board_type: diamond
+board_type: triangle
 
 # 4-8 for triangle, 3-6 for diamond
 board_size: 6
 
 open_cell_positions:
-  - [2, 3]
-  - [5, 5]
+  - [2, 2]
 
 episodes: 600
 
@@ -25,6 +24,6 @@ discount_factor_critic: 0.9
 discount_factor_actor: 0.9
 epsilon: 0.5
 
-visualize: True
+visualize: False
 # Delay between frames in milliseconds for visualization
 frame_time: 1000
