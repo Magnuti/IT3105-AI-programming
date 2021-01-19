@@ -118,6 +118,9 @@ class SimWorld:
 
         return 0, StateStatus.IN_PROGRESS
 
+    def get_remaining_pegs(self):
+        return self.current_state.count(1)
+
     def find_child_states(self):
         if(self.board_type == BoardType.Triangle):
             return self.__find_child_states_triangle()

@@ -4,7 +4,7 @@ import random
 
 from sim_world import SimWorld
 from constants import CriticType, StateStatus
-from visualization import visualize_board
+from visualization import visualize_board, plot_performance
 
 
 # --- Terminology ---
@@ -153,6 +153,8 @@ class RL_agent:
         self.SAP_list_in_current_episode = []
 
     def play(self):
+        remaining_pegs_list = []
+
         # ? State-based critic, should we use SAP instead?
         for episode in range(self.episodes):
             print("--- Episode {} ---".format(episode))
@@ -202,8 +204,13 @@ class RL_agent:
                     visualize_board(self.sim_world.board_type,
                                     new_state_with_visualization)
 
+            remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
+
             # Assuming all boards look the same for now
             self.sim_world.reset_board()
+
+        if(self.visualize):
+            plot_performance(remaining_pegs_list)
 
 
 if __name__ == "__main__":
