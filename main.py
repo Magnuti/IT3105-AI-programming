@@ -6,7 +6,6 @@ from visualization import visualize_board
 if __name__ == "__main__":
     args = Arguments()
     args.parse_arguments()
-
     coordinates_to_1D_index(args.open_cell_positions,
                             args.board_type, args.board_size)
 
