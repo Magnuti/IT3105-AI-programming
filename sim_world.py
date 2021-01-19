@@ -36,10 +36,10 @@ class SimWorld:
 
     def __init_neighbor_cells(self, board_type, board_size):
         if(board_type == BoardType.Triangle):
-            self.neighbors_indecies = self.__init_neighbor_cells_triangle(
+            self.neighbors_indices = self.__init_neighbor_cells_triangle(
                 board_size)
         elif(board_type == BoardType.Diamond):
-            self.neighbors_indecies = self.__init_neighbor_cells_diamond(
+            self.neighbors_indices = self.__init_neighbor_cells_diamond(
                 board_size)
         else:
             raise NotImplementedError()
@@ -134,11 +134,11 @@ class SimWorld:
         child_states_with_visualization = []
         for i, cell_index in enumerate(self.current_state):
             if(cell_index == BoardCell.FULL_CELL.value):
-                for j, neighbor_cell_index in enumerate(self.neighbors_indecies[i]):
+                for j, neighbor_cell_index in enumerate(self.neighbors_indices[i]):
                     if(neighbor_cell_index is None):
                         continue
 
-                    next_nextbour_cell_index = self.neighbors_indecies[neighbor_cell_index][j]
+                    next_nextbour_cell_index = self.neighbors_indices[neighbor_cell_index][j]
                     if(next_nextbour_cell_index is None):
                         continue
 

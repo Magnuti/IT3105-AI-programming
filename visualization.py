@@ -1,7 +1,19 @@
 import matplotlib.pyplot as plt
 from math import sqrt
+import networkx as nx
 
 from constants import *
+
+
+class Cell:
+    def __init__(self, status, position, index):
+        self.status = status
+        # self.position = position
+        self.index = index
+        self.neighbors = []
+
+    def setNeighbors(self, CellList):
+        self.neighbors = CellList
 
 
 def visualize_board(baord_type, board):
@@ -82,3 +94,11 @@ def visualize_hex_diamond(board):
              markeredgecolor="green", markeredgewidth=2, color="black")
 
     plt.show()
+
+    # G = nx.Graph()
+    # G.add_nodes_from([1, 2, 3, 4])
+    # G.add_edge(1, 3)
+    # G.add_edge(2, 4)
+    # G.add_edge(3, 4)
+    # nx.draw(G, with_labels=True, font_weight='bold')
+    # plt.show()
