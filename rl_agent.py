@@ -25,10 +25,11 @@ def make_state_hashable(state):
 
 
 class Critic:
+    # This critic is state-based, not state-action-pair-based
+    # so, we use V(s) instead of Q(s,a)
+
     def __init__(self, critic_type, discount_factor, learning_rate, eligibility_decay):
         if(critic_type == CriticType.TABLE):
-            # ? Should we use V(s) or Q(s, a) ?
-            # ? I think V(s) as mentioned on page 6
             # V[s] --> V(s) value of state s, initialized with random values in the interval [0-1)
             self.V = defaultdict(lambda: random.random())
         elif(critic_type == CriticType.NEURAL_NETWORK):
@@ -43,24 +44,24 @@ class Critic:
 
         self.eligibilities = defaultdict(lambda: 0)
 
-    def update_TD_error(self, state, new_state, reward):
-        self.TD_error = reward + self.discount_factor * \
-            self.V[make_state_hashable(new_state)] - \
-            self.V[make_state_hashable(state)]
-
-    def set_eligibility_of_state(self, state, value=1.0):
-        self.eligibilities[make_state_hashable(state)] = value
-
     def new_episode(self):
         # Reset eligibilities
         for key in self.eligibilities.keys():
             self.eligibilities[key] = 0
 
-    def update_V_of_state(self, state):
+    def update_TD_error(self, state, new_state, reward):
+        self.TD_error = reward + self.discount_factor * \
+            self.V[make_state_hashable(new_state)] - \
+            self.V[make_state_hashable(state)]
+
+    def set_state_eligibility(self, state, value=1.0):
+        self.eligibilities[make_state_hashable(state)] = value
+
+    def update_state_value(self, state):
         self.V[make_state_hashable(state)] += self.learning_rate * \
             self.TD_error * self.eligibilities[make_state_hashable(state)]
 
-    def decay_eligibility_of_state(self, state):
+    def decay_state_eligibility(self, state):
         self.eligibilities[make_state_hashable(
             state)] *= self.discount_factor * self.eligibility_decay
 
@@ -123,14 +124,14 @@ class Actor:
             # Make greedy choice
             return self.get_best_action(current_state, number_of_child_states)
 
-    def set_eligibility_of_SAP(self, SAP, value=1.0):
+    def set_SAP_eligibility(self, SAP, value=1.0):
         self.eligibilities[make_SAP_hashable(SAP)] = value
 
-    def update_pi_of_SAP(self, SAP, TD_error):
+    def update_SAP_policy(self, SAP, TD_error):
         self.pi[make_SAP_hashable(SAP)] += self.learning_rate * \
             TD_error * self.eligibilities[make_SAP_hashable(SAP)]
 
-    def decay_eligibility_of_SAP(self, SAP):
+    def decay_SAP_eligibility(self, SAP):
         self.eligibilities[make_SAP_hashable(
             SAP)] *= self.discount_factor * self.eligibility_decay
 
@@ -154,7 +155,6 @@ class RL_agent:
         SAP_list_in_current_episode = []
         remaining_pegs_list = []
 
-        # ? State-based critic, should we use SAP instead?
         for episode in range(self.episodes):
             if(episode % 100 == 0 or episode == self.episodes - 1):
                 print("--- Episode {} ---".format(episode))
@@ -183,19 +183,19 @@ class RL_agent:
 
                 SAP_list_in_current_episode.append((state, action))
 
-                self.actor.set_eligibility_of_SAP((state, action))
+                self.actor.set_SAP_eligibility((state, action))
 
                 self.critic.update_TD_error(state, new_state, reward)
-                self.critic.set_eligibility_of_state(state)
+                self.critic.set_state_eligibility(state)
 
                 # For SAP so far in this episode
                 for (s, a) in SAP_list_in_current_episode:
                     # TODO restrict to only those that have eligibilites > 0 for performance gain
-                    self.critic.update_V_of_state(s)
-                    self.critic.decay_eligibility_of_state(s)
+                    self.critic.update_state_value(s)
+                    self.critic.decay_state_eligibility(s)
 
-                    self.actor.update_pi_of_SAP((s, a), self.critic.TD_error)
-                    self.actor.decay_eligibility_of_SAP((s, a))
+                    self.actor.update_SAP_policy((s, a), self.critic.TD_error)
+                    self.actor.decay_SAP_eligibility((s, a))
 
                 state = new_state
                 action = new_action
