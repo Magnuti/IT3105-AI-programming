@@ -16,6 +16,11 @@ class Cell:
         self.neighbors = CellList
 
 
+def plot_performance(remaining_pegs_list):
+    plt.plot(remaining_pegs_list)
+    plt.show()
+
+
 def visualize_board(baord_type, board):
     if(baord_type == BoardType.Triangle):
         visualize_hex_triangle(board)
