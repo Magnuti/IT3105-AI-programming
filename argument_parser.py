@@ -26,8 +26,8 @@ class Arguments:
         # Delay between frames for visualization
 
         self.episodes = 1
-        self.learning_rate_critic = 1.0
-        self.learning_rate_actor = 1.0
+        self.learning_rate_critic = 0.1
+        self.learning_rate_actor = 0.1
         self.eligibility_decay_critic = 0.9
         self.eligibility_decay_actor = 0.9
         self.discount_factor_critic = 0.9
@@ -75,6 +75,10 @@ class Arguments:
         elif(args.board == BoardType.Diamond.value):
             if(args.size < 3 or args.size > 6):
                 parser.error("Diamond boards must be of size [3-6]")
+            if(args.size == 4 and len(args.cell_positions) == 1):
+                if(args.cell_positions[0] == 5 or args.cell_positions[0] == 10):
+                    print(
+                        "WARNING: A diamond board of size 4 can only be solved with center positions 6 or 9, not 5 or 10.")
         else:
             raise NotImplementedError()
 

@@ -110,7 +110,8 @@ class SimWorld:
     def get_reward_and_state_status(self):
         pegs = self.current_state.count(1)
         if(pegs == 1):
-            return 1, StateStatus.SUCCESS_FINISH
+            # TODO experiment with different rewards
+            return 100, StateStatus.SUCCESS_FINISH
 
         child_states, _ = self.find_child_states()  # TODO duplicate call somewhere
         if(len(child_states) == 0):
