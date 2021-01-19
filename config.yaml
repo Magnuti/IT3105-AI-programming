@@ -1,9 +1,14 @@
 # [triangle, diamond]
-board_type: triangle
+board_type: diamond
 
 # 4-8 for triangle, 3-6 for diamond
-board_size: 6
+board_size: 4
 
+# Must be in the format [[y, x], [y, x], ...]
+# or
+# - [y, x]
+# - [y, x]
+# - ...
 open_cell_positions:
   - [2, 2]
 

@@ -25,24 +25,27 @@ class Arguments:
         frame_time = config_data["frame_time"]
 
         if(board_type == BoardType.Triangle.value):
-            if(board_size < 4 or board_size > 8):
-                raise ValueError("Triangle boards must be of size [4-8]")
+            raise NotImplementedError()
         elif(board_type == BoardType.Diamond.value):
-            if(board_size < 3 or board_size > 6):
-                raise ValueError("Diamond boards must be of size [3-6]")
-            if(board_size == 4 and len(open_cell_positions) == 1 and (open_cell_positions[0] == 5 or open_cell_positions[0] == 10)):
+            if(board_size == 4 and len(open_cell_positions) == 1 and (open_cell_positions[0] == [1, 1] or open_cell_positions[0] == [2, 2])):
                 print(
-                    "WARNING: A diamond board of size 4 can only be solved with center positions 6 or 9, not 5 or 10.")
+                    "WARNING: A diamond board of size 4 can only be solved with center positions [1, 2] or [2, 1], not [1, 1] or [2, 2].")
         else:
             raise NotImplementedError()
 
-        if(critic_type == CriticType.NEURAL_NETWORK and not nn_dim):
-            raise ValueError("--nn_dim is required when --critic = nn")
+        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dim) < 2):
+            raise ValueError(
+                "nn_dim must have a valid neural network structure.")
 
-        for (x, y) in open_cell_positions:
-            if(x >= board_size or y >= board_size):
-                raise ValueError(
-                    "Cell position {0} is too large for a board of size {1}x{1}".format((x, y), board_size))
+        if(board_type == BoardType.Triangle.value):
+            raise NotImplementedError()
+        if(board_type == BoardType.Diamond.value):
+            for (x, y) in open_cell_positions:
+                if(x >= board_size or y >= board_size):
+                    raise ValueError(
+                        "Cell position {0} is too large for a board of size {1}x{1}".format([x, y], board_size))
+        else:
+            raise NotImplementedError()
 
         if(discount_factor_critic * eligibility_decay_critic >= 1.0):
             raise ValueError(
@@ -54,7 +57,6 @@ class Arguments:
 
         self.board_type = BoardType(board_type)
         self.board_size = board_size
-        self.open_cell_positions = open_cell_positions
         self.episodes = episodes
         self.critic_type = CriticType(critic_type)
         self.nn_dim = nn_dim
@@ -67,6 +69,18 @@ class Arguments:
         self.epsilon = epsilon
         self.visualize = visualize
         self.frame_time = frame_time
+
+        # Calculate 1D indexes from 2D [x, y] positions
+        if(self.board_type == BoardType.Triangle):
+            raise NotImplementedError()
+        if(self.board_type == BoardType.Diamond):
+            indexes = []
+            for (y, x) in open_cell_positions:
+                indexes.append(y * self.board_size + x)
+
+            self.open_cell_positions = indexes
+        else:
+            raise NotImplementedError()
 
     def __str__(self):
         x = "Arguments: {\n"
