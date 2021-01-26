@@ -1,17 +1,20 @@
 from constants import *
 from argument_parser import Arguments
 from visualization import visualize_board
+import networkx as nx
 
 
 class Cell:
-    def __init__(self, status, position, index):
+    def __init__(self, index, status):
         self.status = status
-        # self.position = position
         self.index = index
         self.neighbors = []
 
     def setNeighbors(self, CellList):
         self.neighbors = CellList
+
+    def setStatus(self, status):
+        self.status = status
 
 
 class SimWorld:
@@ -21,7 +24,7 @@ class SimWorld:
         self.open_cell_positions = open_cell_positions
 
         self.__init_board(board_type, open_cell_positions, board_size)
-        self.__init_neighbor_cells(board_type, board_size)
+        self.__init_neighbor_cells()
 
         # TODO check if init board has valid IN_PROGRESS status
         self.current_state_status = StateStatus.IN_PROGRESS
@@ -37,78 +40,108 @@ class SimWorld:
             raise NotImplementedError()
 
     def __init_triangle_board(self, open_cell_positions, board_size):
+
         raise NotImplementedError()
 
     def __init_diamond_board(self, open_cell_positions, board_size):
-        board = [1 for i in range(board_size**2)]
-        for i in open_cell_positions:
-            board[i] = 0
-        return board
+        G = nx.grid_2d_graph(board_size, board_size)
 
-    def __init_neighbor_cells(self, board_type, board_size):
-        if(board_type == BoardType.Triangle):
-            self.neighbors_indices = self.__init_neighbor_cells_triangle(
-                board_size)
-        elif(board_type == BoardType.Diamond):
-            self.neighbors_indices = self.__init_neighbor_cells_diamond(
-                board_size)
-        else:
-            raise NotImplementedError()
+        # Set node-positions for plotting and add diagonal edges
+        pos_dict = {}
+        for node_key in G.nodes():
+            # This line is inspired by Mathias.TA
+            pos_dict[node_key] = (-node_key[0] + node_key[1], -
+                                  node_key[0] - node_key[1])
+            if node_key[0] != 0 and node_key[1] < (board_size - 1):
+                G.add_edge(node_key, (node_key[0] - 1, node_key[1] + 1))
 
-    def __init_neighbor_cells_triangle(self, board_size):
-        raise NotImplementedError()
+        # Storing the visualization positions on the graph-object
+        G.graph['pos_dict'] = pos_dict
 
-    def __init_neighbor_cells_diamond(self, board_size):
-        neighbors = {}
-        cell_count = board_size**2
-
-        for i in range(cell_count):
-            neighbors[i] = []
-            current_row = i // board_size
-
-            # Top
-            k = i - board_size
-            if(k >= 0):
-                neighbors[i].append(k)
+        # Add Cells to the graph node's ['data']
+        for i, node_key in enumerate(G.nodes()):
+            # status 0 for the cells that are open initially
+            if i in open_cell_positions:
+                status = 0
             else:
-                neighbors[i].append(None)
+                status = 1
+            _cell = Cell(index=i, status=status)
+            G.nodes[node_key]['data'] = _cell
 
-            # Top-right
-            k = i - board_size + 1
-            if(k >= 0 and (k // board_size) == current_row - 1):
-                neighbors[i].append(k)
-            else:
-                neighbors[i].append(None)
+        return G
 
-            # Left
-            k = i - 1
-            if(k >= 0 and (k // board_size) == current_row):
-                neighbors[i].append(k)
-            else:
-                neighbors[i].append(None)
+    def __init_neighbor_cells(self):
 
-            # Right
-            k = i + 1
-            if(k < cell_count and (k // board_size) == current_row):
-                neighbors[i].append(k)
-            else:
-                neighbors[i].append(None)
+        # if(board_type == BoardType.Triangle):
+        #     self.neighbors_indices = self.__init_neighbor_cells_triangle(
+        #         board_size)
+        # elif(board_type == BoardType.Diamond):
+        #     self.neighbors_indices = self.__init_neighbor_cells_diamond(
+        #         board_size)
+        # else:
+        #     raise NotImplementedError()
 
-            # Bottom-left
-            k = i + board_size - 1
-            if(k < cell_count and (k // board_size) == current_row + 1):
-                neighbors[i].append(k)
-            else:
-                neighbors[i].append(None)
+        # def __init_neighbor_cells_triangle(self, board_size):
+        #     raise NotImplementedError()
 
-            # Bottom
-            k = i + board_size
-            if(k < cell_count):
-                neighbors[i].append(k)
-            else:
-                neighbors[i].append(None)
+        # def __init_neighbor_cells_diamond(self, board_size):
+        #     neighbors = {}
+        #     cell_count = board_size**2
 
-        return neighbors
+        #     for i in range(cell_count):
+        #         neighbors[i] = []
+        #         current_row = i // board_size
+
+        #         # Top
+        #         k = i - board_size
+        #         if(k >= 0):
+        #             neighbors[i].append(k)
+        #         else:
+        #             neighbors[i].append(None)
+
+        #         # Top-right
+        #         k = i - board_size + 1
+        #         if(k >= 0 and (k // board_size) == current_row - 1):
+        #             neighbors[i].append(k)
+        #         else:
+        #             neighbors[i].append(None)
+
+        #         # Left
+        #         k = i - 1
+        #         if(k >= 0 and (k // board_size) == current_row):
+        #             neighbors[i].append(k)
+        #         else:
+        #             neighbors[i].append(None)
+
+        #         # Right
+        #         k = i + 1
+        #         if(k < cell_count and (k // board_size) == current_row):
+        #             neighbors[i].append(k)
+        #         else:
+        #             neighbors[i].append(None)
+
+        #         # Bottom-left
+        #         k = i + board_size - 1
+        #         if(k < cell_count and (k // board_size) == current_row + 1):
+        #             neighbors[i].append(k)
+        #         else:
+        #             neighbors[i].append(None)
+
+        #         # Bottom
+        #         k = i + board_size
+        #         if(k < cell_count):
+        #             neighbors[i].append(k)
+        #         else:
+        #             neighbors[i].append(None)
+
+        #     return neighbors
+
+        # TODO test that this returns the cell
+
+    def get_cell_from_index(self, index):
+        # current_state is a Graph object
+        nodes = list[self.current_state.nodes]
+        return self.current_state.nodes[nodes[index]]['data']
 
     def reset_board(self):
         self.__init_board(

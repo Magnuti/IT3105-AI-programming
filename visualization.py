@@ -3,6 +3,7 @@ from math import sqrt
 import networkx as nx
 
 from constants import *
+import pprint
 
 
 def plot_performance(remaining_pegs_list):
@@ -89,10 +90,40 @@ def visualize_hex_diamond(board):
 
     plt.show()
 
-    # G = nx.Graph()
-    # G.add_nodes_from([1, 2, 3, 4])
-    # G.add_edge(1, 3)
-    # G.add_edge(2, 4)
-    # G.add_edge(3, 4)
-    # nx.draw(G, with_labels=True, font_weight='bold')
-    # plt.show()
+
+if __name__ == '__main__':
+    from visualization import Cell
+
+    board_size = 4
+    G = nx.grid_2d_graph(board_size, board_size)
+    pos = {}
+    # Set node-position on plot and add diagonal edges
+    for node_key in G.nodes():
+        # This line is inspired by Mathias.TA
+        pos[node_key] = (-node_key[0] + node_key[1], -
+                         node_key[0] - node_key[1])
+        if node_key[0] != 0 and node_key[1] < (board_size - 1):
+            # print('Adding edge', node_key, (node_key[0]+1, node_key[1]+1))
+            G.add_edge(node_key, (node_key[0] - 1, node_key[1] + 1))
+
+    # Storing the visualization positions on the graph-object
+    G.graph['pos_dict'] = pos
+
+    board = []
+    for i, node_key in enumerate(G.nodes()):
+        # status 0 for the cells that are open initially
+        # if i in [10]:
+        if i in open_cell_positions:
+            status = 0
+        else:
+            status = 1
+        # print(pos[node_key])
+        _cell = Cell(index=i, status=status)
+        board.append(_cell)
+        G.nodes[node_key]['data'] = _cell
+
+    nx.draw(G, pos=G.graph['pos_dict'], with_labels=True, font_weight='bold')
+    plt.show()
+
+    for _cell in G.nodes():
+        print(_cell, ': ', G.nodes[_cell]['data'].status)
