@@ -10,10 +10,10 @@ class Cell:
         self.index = index
         self.neighbors = []
 
-    def setNeighbors(self, CellList):
+    def set_neighbors(self, CellList):
         self.neighbors = CellList
 
-    def setStatus(self, status):
+    def set_status(self, status):
         self.status = status
 
 
@@ -71,76 +71,17 @@ class SimWorld:
         return G
 
     def __init_neighbor_cells(self):
-
-        # if(board_type == BoardType.Triangle):
-        #     self.neighbors_indices = self.__init_neighbor_cells_triangle(
-        #         board_size)
-        # elif(board_type == BoardType.Diamond):
-        #     self.neighbors_indices = self.__init_neighbor_cells_diamond(
-        #         board_size)
-        # else:
-        #     raise NotImplementedError()
-
-        # def __init_neighbor_cells_triangle(self, board_size):
-        #     raise NotImplementedError()
-
-        # def __init_neighbor_cells_diamond(self, board_size):
-        #     neighbors = {}
-        #     cell_count = board_size**2
-
-        #     for i in range(cell_count):
-        #         neighbors[i] = []
-        #         current_row = i // board_size
-
-        #         # Top
-        #         k = i - board_size
-        #         if(k >= 0):
-        #             neighbors[i].append(k)
-        #         else:
-        #             neighbors[i].append(None)
-
-        #         # Top-right
-        #         k = i - board_size + 1
-        #         if(k >= 0 and (k // board_size) == current_row - 1):
-        #             neighbors[i].append(k)
-        #         else:
-        #             neighbors[i].append(None)
-
-        #         # Left
-        #         k = i - 1
-        #         if(k >= 0 and (k // board_size) == current_row):
-        #             neighbors[i].append(k)
-        #         else:
-        #             neighbors[i].append(None)
-
-        #         # Right
-        #         k = i + 1
-        #         if(k < cell_count and (k // board_size) == current_row):
-        #             neighbors[i].append(k)
-        #         else:
-        #             neighbors[i].append(None)
-
-        #         # Bottom-left
-        #         k = i + board_size - 1
-        #         if(k < cell_count and (k // board_size) == current_row + 1):
-        #             neighbors[i].append(k)
-        #         else:
-        #             neighbors[i].append(None)
-
-        #         # Bottom
-        #         k = i + board_size
-        #         if(k < cell_count):
-        #             neighbors[i].append(k)
-        #         else:
-        #             neighbors[i].append(None)
-
-        #     return neighbors
-
-        # TODO test that this returns the cell
+        for node_key in self.current_state.nodes():
+            this_cell = self.current_state.nodes[node_key]['data']
+            neighbor_cells = []
+            for node_key in self.current_state.adj[node_key]:
+                neighbor_cells.append(
+                    self.current_state.nodes[node_key]['data'])
+            this_cell.set_neighbors(neighbor_cells)
 
     def get_cell_from_index(self, index):
         # current_state is a Graph object
-        nodes = list[self.current_state.nodes]
+        nodes = list(self.current_state.nodes.keys())
         return self.current_state.nodes[nodes[index]]['data']
 
     def reset_board(self):
@@ -207,10 +148,7 @@ class SimWorld:
         return child_states, child_states_with_visualization
 
 
-# if __name__ == "__main__":
-    # args = Arguments()
-    # args.parse_arguments()
-
-    # sim_world = SimWorld(
-    #     args.board_type, args.open_cell_positions, args.board_size)
+if __name__ == "__main__":
+    sim_world = SimWorld(
+        BoardType.Diamond, [2], 3)
     # visualize_board(sim_world.board_type, sim_world.current_state)

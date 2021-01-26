@@ -92,9 +92,9 @@ def visualize_hex_diamond(board):
 
 
 if __name__ == '__main__':
-    from visualization import Cell
+    from sim_world import Cell
 
-    board_size = 4
+    board_size = 3
     G = nx.grid_2d_graph(board_size, board_size)
     pos = {}
     # Set node-position on plot and add diagonal edges
@@ -112,8 +112,8 @@ if __name__ == '__main__':
     board = []
     for i, node_key in enumerate(G.nodes()):
         # status 0 for the cells that are open initially
-        # if i in [10]:
-        if i in open_cell_positions:
+        if i in [10]:
+            # if i in open_cell_positions:
             status = 0
         else:
             status = 1
@@ -125,5 +125,5 @@ if __name__ == '__main__':
     nx.draw(G, pos=G.graph['pos_dict'], with_labels=True, font_weight='bold')
     plt.show()
 
-    for _cell in G.nodes():
-        print(_cell, ': ', G.nodes[_cell]['data'].status)
+    for node_key in G.nodes():
+        print(node_key, ': ', G.nodes[node_key]['data'].status)
