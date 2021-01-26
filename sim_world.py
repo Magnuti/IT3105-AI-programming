@@ -85,8 +85,11 @@ class SimWorld:
                     self.current_state.nodes[node_key]['data'])
             this_cell.set_neighbors(neighbor_cells)
 
+    def get_node_key_list(self):
+        return list(self.current_state.nodes.keys())
+
     def get_cell_from_index(self, index):
-        nodes = list(self.current_state.nodes.keys())
+        nodes = self.get_node_key_list()
         return self.current_state.nodes[nodes[index]]['data']
 
     def reset_board(self):
@@ -132,8 +135,11 @@ class SimWorld:
     def __find_child_states_diamond(self):
         child_states = []
         child_states_with_visualization = []
-        for i, cell_index in enumerate(self.current_state):
-            if(cell_index == BoardCell.FULL_CELL.value):
+        # TODO: node_key unused?
+        for i, node_key in enumerate(self.get_node_key_list()):
+            if (self.get_cell_from_index(i).status == BoardCell.FULL_CELL.value):
+                # TODO: all "i" may need to be rewritten
+                # TODO: Jonas continue from here
                 for j, neighbor_cell_index in enumerate(self.neighbors_indices[i]):
                     if(neighbor_cell_index is None):
                         continue
