@@ -1,10 +1,14 @@
 from collections import defaultdict
 from enum import Enum
 import random
+import numpy as np
+import tensorflow as tf
 
 from sim_world import SimWorld
 from constants import CriticType, StateStatus
 from visualization import visualize_board, plot_performance
+from function_approximator import FunctionApproximator
+from split_gd import SplitGD
 
 
 # --- Terminology ---
@@ -24,23 +28,72 @@ def make_state_hashable(state):
     return tuple(state)
 
 
-class Critic:
+class CriticFuncApp:
+    def __init__(self, nn_dims, discount_factor, learning_rate, eligibility_decay):
+        func_app = FunctionApproximator(nn_dims)
+        self.split_gd_model = SplitGD(func_app.build_network())
+        # self.model = func_app.build_network()
+
+        self.nn_dims = nn_dims
+        self.discount_factor = discount_factor  # γ
+        self.learning_rate = learning_rate
+        self.eligibility_decay = eligibility_decay  # aka. trace decay λ
+
+        # Holds the eligibilities for each weight on a layer
+        # self.eligibilities[0] is empty
+        # self.eligibilities[1] holds a np.darray of shape (neuron_count_layer_1, neuron_count_layer_0)
+        # so, self.eligibilities[5][2][3] specifies the eligibility for the weight to neuron 2 in
+        # layer 5 from neuron 3 in layer 4
+        self.eligibilities = []
+        for i, neuron_count in enumerate(nn_dims):
+            if(i == 0):
+                self.eligibilities.append(np.empty(1))
+                continue
+            prev_layer_neuron_count = nn_dims[i - 1]
+            eligibilities_on_this_layer = np.zeros(
+                (neuron_count, prev_layer_neuron_count))
+            self.eligibilities.append(eligibilities_on_this_layer)
+
+    def new_episode(self):
+        # Reset eligibilities
+        for i, eligibility_matrix in enumerate(self.eligibilities):
+            eligibility_matrix.fill(0)
+            self.eligibilities[i] = eligibility_matrix
+
+    def update_TD_error(self, state, new_state, reward):
+        state = tf.convert_to_tensor([state])
+        new_state = tf.convert_to_tensor([new_state])
+        self.TD_error = reward + self.discount_factor * \
+            self.split_gd_model.model(new_state) - \
+            self.split_gd_model.model(state)
+
+    def set_state_eligibility(self, state, value=1.0):
+        pass
+        # self.eligibilities[make_state_hashable(state)] = value
+
+    def update_state_value(self, state):
+        # ? This one should not do anything I am right
+        # ? Maybe update weight somewhere tho
+        pass
+
+    def decay_state_eligibility(self, state):
+        pass
+        # raise NotImplementedError()
+
+
+# TODO make a Critic interface and CriticTable, CriticFuncApp inheritance
+
+class CriticTable:
     # This critic is state-based, not state-action-pair-based
     # so, we use V(s) instead of Q(s,a)
 
-    def __init__(self, critic_type, discount_factor, learning_rate, eligibility_decay):
-        if(critic_type == CriticType.TABLE):
-            # V[s] --> V(s) value of state s, initialized with random values in the interval [0-1)
-            self.V = defaultdict(lambda: random.random())
-        elif(critic_type == CriticType.NEURAL_NETWORK):
-            raise NotImplementedError()
-        else:
-            raise NotImplementedError()
+    def __init__(self, discount_factor, learning_rate, eligibility_decay):
+        # V[s] --> V(s) value of state s, initialized with random values in the interval [0-1)
+        self.V = defaultdict(lambda: random.random())
 
-        self.critic_type = critic_type  # Table or nn
         self.discount_factor = discount_factor  # γ
         self.learning_rate = learning_rate
-        self.eligibility_decay = eligibility_decay  # ? aka. trace decay λ
+        self.eligibility_decay = eligibility_decay  # aka. trace decay λ
 
         self.eligibilities = defaultdict(lambda: 0)
 
@@ -73,7 +126,7 @@ class Actor:
     def __init__(self, learning_rate, discount_factor, eligibility_decay, epsilon):
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
-        self.eligibility_decay = eligibility_decay  # ? aka. trace decay λ
+        self.eligibility_decay = eligibility_decay  # aka. trace decay λ
         # TODO decrement epsilon over time and set to 0 on final lap to make behavior policy = target policy?
         self.epsilon = epsilon
 
@@ -137,16 +190,24 @@ class Actor:
 
 
 class RL_agent:
-    def __init__(self, sim_world, episodes, critic_type, learning_rate_critic, learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor, discount_factor_critic, discount_factor_actor, epsilon, visualize):
+    def __init__(self, sim_world, episodes, critic_type, nn_dims, learning_rate_critic, learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor, discount_factor_critic, discount_factor_actor, epsilon, visualize):
         self.episodes = episodes
         self.critic_type = critic_type
+        self.nn_dims = nn_dims
         self.sim_world = sim_world
         self.epsilon = epsilon  # Decays over time
         self.epsilon_decay_value = epsilon / episodes  # Linear dacay
         self.visualize = visualize
 
-        self.critic = Critic(critic_type, learning_rate_critic,
-                             eligibility_decay_critic, discount_factor_critic)
+        if(critic_type == CriticType.TABLE):
+            self.critic = CriticTable(
+                learning_rate_critic, eligibility_decay_critic, discount_factor_critic)
+        elif(critic_type == CriticType.NEURAL_NETWORK):
+            self.critic = CriticFuncApp(
+                nn_dims, learning_rate_critic, eligibility_decay_critic, discount_factor_critic)
+        else:
+            raise NotImplementedError()
+
         self.actor = Actor(learning_rate_actor,
                            eligibility_decay_actor, discount_factor_actor, epsilon)
 

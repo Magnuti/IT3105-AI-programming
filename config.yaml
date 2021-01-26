@@ -15,14 +15,16 @@ open_cell_positions:
 episodes: 600
 
 # [table, nn]
-critic_type: table
+critic_type: nn
 
 # Required if critic: nn
 # Dimension of critic's NN, number of layers and neurons in each layer (e.g. (5, 10, 1) is 3 layers with 5, 10 and 1 neurons)
-nn_dim: [5, 10, 1]
+nn_dims: [15, 64, 1]
 
-learning_rate_critic: 0.1
+# Remember that it is wise to use a "much lower" learning rate for the critic when it uses a neural network
+learning_rate_critic: 0.01
 learning_rate_actor: 0.1
+
 eligibility_decay_critic: 0.9
 eligibility_decay_actor: 0.9
 discount_factor_critic: 0.9

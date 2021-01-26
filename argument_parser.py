@@ -13,7 +13,7 @@ class Arguments:
         open_cell_positions = config_data["open_cell_positions"]
         episodes = config_data["episodes"]
         critic_type = config_data["critic_type"]
-        nn_dim = config_data["nn_dim"]
+        nn_dims = config_data["nn_dims"]
         learning_rate_critic = config_data["learning_rate_critic"]
         learning_rate_actor = config_data["learning_rate_actor"]
         eligibility_decay_critic = config_data["eligibility_decay_critic"]
@@ -33,9 +33,9 @@ class Arguments:
         else:
             raise NotImplementedError()
 
-        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dim) < 2):
+        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dims) < 2):
             raise ValueError(
-                "nn_dim must have a valid neural network structure.")
+                "nn_dims must have a valid neural network structure.")
 
         if(board_type == BoardType.Triangle.value):
             raise NotImplementedError()
@@ -59,7 +59,7 @@ class Arguments:
         self.board_size = board_size
         self.episodes = episodes
         self.critic_type = CriticType(critic_type)
-        self.nn_dim = nn_dim
+        self.nn_dims = nn_dims
         self.learning_rate_critic = learning_rate_critic
         self.learning_rate_actor = learning_rate_actor
         self.eligibility_decay_critic = eligibility_decay_critic
