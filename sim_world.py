@@ -93,11 +93,14 @@ class SimWorld:
         self.__init_board(
             self.board_type, self.open_cell_positions, self.board_size)
 
+    # TODO
     def pick_new_state(self, state):
         # ? Check if state is in child_states maybe for security
         self.current_state = state
 
+    # TODO
     def get_reward_and_state_status(self):
+        # TODO: new get_pegs_func
         pegs = self.current_state.count(1)
         if(pegs == 1):
             # TODO experiment with different rewards
@@ -109,9 +112,11 @@ class SimWorld:
 
         return 0, StateStatus.IN_PROGRESS
 
+    # TODO:
     def get_remaining_pegs(self):
         return self.current_state.count(1)
 
+    # TODO
     def find_child_states(self):
         if(self.board_type == BoardType.Triangle):
             return self.__find_child_states_triangle()
@@ -123,6 +128,7 @@ class SimWorld:
     def __find_child_states_triangle(self):
         raise NotImplementedError()
 
+    # TODO
     def __find_child_states_diamond(self):
         child_states = []
         child_states_with_visualization = []
@@ -132,21 +138,21 @@ class SimWorld:
                     if(neighbor_cell_index is None):
                         continue
 
-                    next_nextbour_cell_index = self.neighbors_indices[neighbor_cell_index][j]
-                    if(next_nextbour_cell_index is None):
+                    next_neighbor_cell_index = self.neighbors_indices[neighbor_cell_index][j]
+                    if(next_neighbor_cell_index is None):
                         continue
 
-                    if(self.current_state[neighbor_cell_index] == BoardCell.FULL_CELL.value and self.current_state[next_nextbour_cell_index] == BoardCell.EMPTY_CELL.value):
+                    if(self.current_state[neighbor_cell_index] == BoardCell.FULL_CELL.value and self.current_state[next_neighbor_cell_index] == BoardCell.EMPTY_CELL.value):
                         new_board = self.current_state.copy()
                         new_board[i] = BoardCell.EMPTY_CELL.value
                         new_board[neighbor_cell_index] = BoardCell.EMPTY_CELL.value
-                        new_board[next_nextbour_cell_index] = BoardCell.FULL_CELL.value
+                        new_board[next_neighbor_cell_index] = BoardCell.FULL_CELL.value
                         child_states.append(new_board)
 
                         new_board_with_visualization = self.current_state.copy()
                         new_board_with_visualization[i] = BoardCell.JUMPED_FROM_CELL.value
                         new_board_with_visualization[neighbor_cell_index] = BoardCell.PRUNED_CELL.value
-                        new_board_with_visualization[next_nextbour_cell_index] = BoardCell.JUMPED_TO_CELL.value
+                        new_board_with_visualization[next_neighbor_cell_index] = BoardCell.JUMPED_TO_CELL.value
                         child_states_with_visualization.append(
                             new_board_with_visualization)
 
