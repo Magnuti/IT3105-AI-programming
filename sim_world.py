@@ -5,6 +5,12 @@ import networkx as nx
 
 
 class Cell:
+    def __str__(self):
+        return 'Cell_' + str(self.index)
+
+    def __repr__(self):
+        return 'Cell_' + str(self.index)
+
     def __init__(self, index, status):
         self.status = status
         self.index = index
@@ -80,7 +86,6 @@ class SimWorld:
             this_cell.set_neighbors(neighbor_cells)
 
     def get_cell_from_index(self, index):
-        # current_state is a Graph object
         nodes = list(self.current_state.nodes.keys())
         return self.current_state.nodes[nodes[index]]['data']
 
