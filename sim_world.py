@@ -264,7 +264,7 @@ class SimWorld:
         child_states_with_visualization = []
         for i, cell in enumerate(self.current_state):
             if (cell.status == BoardCell.FULL_CELL.value):
-                for j, neighbor_index in enumerate(cell.neighbors):
+                for j, neighbor_index in enumerate(cell.neighbor_indices):
 
                     if(neighbor_index is None):
                         # outside of the board
@@ -276,7 +276,7 @@ class SimWorld:
                         continue
 
                     # index of next cell in the same direction as neighbor_index
-                    next_neighbor_index = self.current_state[neighbor_index].neighbors[j]
+                    next_neighbor_index = self.current_state[neighbor_index].neighbor_indices[j]
                     if (next_neighbor_index is None):
                         # outside of the board
                         continue
@@ -284,17 +284,16 @@ class SimWorld:
                     if (self.current_state[next_neighbor_index].status == BoardCell.EMPTY_CELL.value):
                         # the state that gets delivered to the RL-agent is represented as [cell.status]
 
-                        current_state_map = map(
-                            lambda x: x.status, self.current_state)
-                        new_state = copy.copy(current_state_map)
+                        current_state = list(map(
+                            lambda x: x.status, self.current_state))
 
+                        new_state = current_state.copy()
                         new_state[i] = BoardCell.EMPTY_CELL.value
                         new_state[neighbor_index] = BoardCell.EMPTY_CELL.value
                         new_state[next_neighbor_index] = BoardCell.FULL_CELL.value
                         child_states.append(new_state)
 
-                        new_state_with_visualization = copy.copy(
-                            current_state_map)
+                        new_state_with_visualization = current_state.copy()
                         new_state_with_visualization[i] = BoardCell.JUMPED_FROM_CELL.value
                         new_state_with_visualization[neighbor_index] = BoardCell.PRUNED_CELL.value
                         new_state_with_visualization[next_neighbor_index] = BoardCell.JUMPED_TO_CELL.value
