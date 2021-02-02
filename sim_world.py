@@ -6,14 +6,14 @@ import networkx as nx
 
 class Cell:
     def __str__(self):
-        return 'Cell_' + str(self.index)
+        return 'Cell_' + str(self.pos)
 
     def __repr__(self):
-        return 'Cell_' + str(self.index)
+        return 'Cell_' + str(self.pos)
 
     def __init__(self, status, pos):
         self.status = status
-        self.neighbor_indexes = []
+        self.neighbor_indices = []
         self.pos = pos
 
 
@@ -44,32 +44,22 @@ class SimWorld:
     def __init_diamond_board(self, board_size):
         G = nx.empty_graph(len(self.current_state))
 
-        # # Add all edges
+        # Add all edges and connect the Cell to the graph_node
         for i, cell in enumerate(self.current_state):
-            for j, neighbor_cell in enumerate(cell.neighbors):
-                G[i].add_edge(G[i], G[neighbor_cell.index])
+            G.nodes[i]['data'] = cell
+            for neighbor_index in cell.neighbors:
+                if neighbor_index is not None:
+                    G[i].add_edge(i, neighbor_index)
 
-        # # # Set node-positions for plotting and add diagonal edges
-        # pos_dict = {}
-        # for node_key in G.nodes():
-        #     # This line is inspired by Mathias.TA
-        #     pos_dict[node_key] = (-node_key[0] + node_key[1], -
-        #                           node_key[0] - node_key[1])
-        #     # if node_key[0] != 0 and node_key[1] < (board_size - 1):
-        #     #     G.add_edge(node_key, (node_key[0] - 1, node_key[1] + 1))
+        # Set node-positions for plotting
+        plot_pos_dict = {}
+        for node_key in G.nodes():
+            # This line is inspired by the TA Mathias
+            plot_pos_dict[node_key] = (-node_key[0] + node_key[1], -
+                                       node_key[0] - node_key[1])
 
-        # # # Storing the visualization positions on the graph-object
-        # G.graph['pos_dict'] = pos_dict
-
-        # # # Add Cells to the graph node's ['data']
-        # for i, node_key in enumerate(G.nodes()):
-        #     # status 0 for the cells that are open initially
-        #     if i in open_cell_positions:
-        #         status = 0
-        #     else:
-        #         status = 1
-        #     _cell = Cell(index=i, status=status)
-        #     G.nodes[node_key]['data'] = _cell
+        # Store the plot_pos_dict on the graph-object
+        G.graph['plot_pos_dict'] = plot_pos_dict
 
         return G
 
@@ -102,51 +92,51 @@ class SimWorld:
             cell = Cell(status=status,
                         pos=self.index_to_coordinate_diamond(i, board_size))
             current_row = cell.pos[0]
-            neighbor_indexes = []
+            neighbor_indices = []
 
             # Top
             k = i - board_size
             if(k >= 0):
-                neighbor_indexes.append(k)
+                neighbor_indices.append(k)
             else:
-                neighbor_indexes.append(None)
+                neighbor_indices.append(None)
 
             # Top-right
             k = i - board_size + 1
             if(k >= 0 and (k // board_size) == current_row - 1):
-                neighbor_indexes.append(k)
+                neighbor_indices.append(k)
             else:
-                neighbor_indexes.append(None)
+                neighbor_indices.append(None)
 
             # Left
             k = i - 1
             if(k >= 0 and (k // board_size) == current_row):
-                neighbor_indexes.append(k)
+                neighbor_indices.append(k)
             else:
-                neighbor_indexes.append(None)
+                neighbor_indices.append(None)
 
             # Right
             k = i + 1
             if(k < cell_count and (k // board_size) == current_row):
-                neighbor_indexes.append(k)
+                neighbor_indices.append(k)
             else:
-                neighbor_indexes.append(None)
+                neighbor_indices.append(None)
 
             # Bottom-left
             k = i + board_size - 1
             if(k < cell_count and (k // board_size) == current_row + 1):
-                neighbor_indexes.append(k)
+                neighbor_indices.append(k)
             else:
-                neighbor_indexes.append(None)
+                neighbor_indices.append(None)
 
             # Bottom
             k = i + board_size
             if(k < cell_count):
-                neighbor_indexes.append(k)
+                neighbor_indices.append(k)
             else:
-                neighbor_indexes.append(None)
+                neighbor_indices.append(None)
 
-            cell.neighbor_indexes = neighbor_indexes
+            cell.neighbor_indices = neighbor_indices
             cells.append(cell)
         return cells
 
