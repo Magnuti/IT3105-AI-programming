@@ -211,10 +211,6 @@ class SimWorld:
             cells.append(cell)
         return cells
 
-    def reassign_cells_to_graph(self, cells):
-        for i in range(len(cells)):
-            self.graph.nodes[i]['data'] = cell
-
     def index_to_coordinate_diamond(self, index, board_size):
         count = 0
         for y in range(board_size):
@@ -240,10 +236,10 @@ class SimWorld:
         self.__init_board(
             self.board_type, self.board_size)
 
-    def pick_new_state(self, state):
+    def pick_new_state(self, new_state):
         # TODO Check if state is in child_states maybe for security
-        self.current_state = state
-        self.reassign_cells_to_graph(state)
+        for i, cell in enumerate(self.current_state):
+            cell.status = new_state[i]
 
     # TODO
     def get_reward_and_state_status(self):
@@ -285,32 +281,22 @@ class SimWorld:
                         # outside of the board
                         continue
 
-                    if(self.current_state[next_neighbor_index].status == BoardCell.EMPTY_CELL.value):
-                        new_state = self.current_state.copy()
+                    if (self.current_state[next_neighbor_index].status == BoardCell.EMPTY_CELL.value):
+                        # the state that gets delivered to the RL-agent is represented as [cell.status]
 
-                        # make copies of Cells that needs a new status
-                        new_state[i] = copy.copy(new_state[i])
-                        new_state[i].status = BoardCell.EMPTY_CELL.value
-                        new_state[neighbor_index] = copy.copy(
-                            new_state[neighbor_index])
-                        new_state[neighbor_index].status = BoardCell.EMPTY_CELL.value
-                        new_state[next_neighbor_index] = copy.copy(
-                            new_state[next_neighbor_index])
-                        new_state[next_neighbor_index].status = BoardCell.FULL_CELL.value
+                        current_state_map = map(
+                            lambda x: x.status, self.current_state)
+                        new_state = copy.copy(current_state_map)
+
+                        new_state[i] = BoardCell.EMPTY_CELL.value
+                        new_state[neighbor_index] = BoardCell.EMPTY_CELL.value
+                        new_state[next_neighbor_index] = BoardCell.FULL_CELL.value
                         child_states.append(new_state)
 
-                        new_state_with_visualization = self.current_state.copy()
-                        # make copies of Cells that needs a new status
-                        new_state_with_visualization[i] = copy.copy(
-                            new_state_with_visualization[i])
+                        new_state_with_visualization = copy.copy(
+                            current_state_map)
                         new_state_with_visualization[i] = BoardCell.JUMPED_FROM_CELL.value
-                        new_state_with_visualization[neighbor_index] = copy.copy(
-                            new_state_with_visualization[neighbor_index])
                         new_state_with_visualization[neighbor_index] = BoardCell.PRUNED_CELL.value
-                        new_state_with_visualization[neighbor_index] = copy.copy(
-                            new_state_with_visualization[neighbor_index])
-                        new_state_with_visualization[next_neighbor_index] = copy.copy(
-                            new_state_with_visualization[next_neighbor_index])
                         new_state_with_visualization[next_neighbor_index] = BoardCell.JUMPED_TO_CELL.value
                         child_states_with_visualization.append(
                             new_state_with_visualization)

@@ -202,7 +202,8 @@ class RL_agent:
 
                 if(self.visualize and episode == self.episodes - 1):
                     # TODO create automatic visualization animation with given frame rate by args
-                    visualize_board(self.sim_world.board_type,
+
+                    visualize_board(self.sim_world.graph,
                                     new_state_with_visualization)
 
             remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
