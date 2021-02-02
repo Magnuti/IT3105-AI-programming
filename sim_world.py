@@ -30,7 +30,7 @@ class SimWorld:
         self.open_cell_positions = open_cell_positions
 
         self.__init_board(board_type, open_cell_positions, board_size)
-        self.__init_neighbor_cells()
+        self.__init_neighbor_cells(board_type, board_size)
 
         # TODO check if init board has valid IN_PROGRESS status
         self.current_state_status = StateStatus.IN_PROGRESS
@@ -76,7 +76,7 @@ class SimWorld:
 
         return G
 
-    def __init_neighbor_cells(self):
+    def __init_neighbor_cells(self, board_type, board_size):
         for node_key in self.current_state.nodes():
             this_cell = self.current_state.nodes[node_key]['data']
             neighbor_cells = []
@@ -84,6 +84,71 @@ class SimWorld:
                 neighbor_cells.append(
                     self.current_state.nodes[node_key]['data'])
             this_cell.set_neighbors(neighbor_cells)
+        if (board_type == BoardType.Triangle):
+            # TODO we just rearrange the cell.neighbors lists instead
+            self.neighbors_indecies = self.__init_neighbor_cells_triangle(
+                board_size)
+        elif (board_type == BoardType.Diamond):
+            # TODO we just rearrange the cell.neighbors list instead
+            self.neighbors_indecies = self.__init_neighbor_cells_diamond(
+                board_size)
+        else:
+            raise NotImplementedError()
+
+    def __init_neighbor_cells_triangle(self, board_size):
+        raise NotImplementedError()
+
+    def __init_neighbor_cells_diamond(self, board_size):
+        neighbors = {}
+        cell_count = board_size**2
+
+        for i in range(cell_count):
+            neighbors[i] = []
+            current_row = i // board_size
+
+            # Top
+            k = i - board_size
+            if(k >= 0):
+                neighbors[i].append(k)
+            else:
+                neighbors[i].append(None)
+
+            # Top-right
+            k = i - board_size + 1
+            if(k >= 0 and (k // board_size) == current_row - 1):
+                neighbors[i].append(k)
+            else:
+                neighbors[i].append(None)
+
+            # Left
+            k = i - 1
+            if(k >= 0 and (k // board_size) == current_row):
+                neighbors[i].append(k)
+            else:
+                neighbors[i].append(None)
+
+            # Right
+            k = i + 1
+            if(k < cell_count and (k // board_size) == current_row):
+                neighbors[i].append(k)
+            else:
+                neighbors[i].append(None)
+
+            # Bottom-left
+            k = i + board_size - 1
+            if(k < cell_count and (k // board_size) == current_row + 1):
+                neighbors[i].append(k)
+            else:
+                neighbors[i].append(None)
+
+            # Bottom
+            k = i + board_size
+            if(k < cell_count):
+                neighbors[i].append(k)
+            else:
+                neighbors[i].append(None)
+
+        return neighbors
 
     def get_node_key_list(self):
         return list(self.current_state.nodes.keys())
@@ -94,7 +159,7 @@ class SimWorld:
 
     def get_cells(self):
         # TODO doing this method for each move may be unnecessary, maybe just store the cells in the sim_world class?
-        return nx.get_node_attributes(self.current_state, 'data')
+        return list(nx.get_node_attributes(self.current_state, 'data').values())
 
     def reset_board(self):
         self.__init_board(
@@ -174,4 +239,5 @@ class SimWorld:
 if __name__ == "__main__":
     sim_world = SimWorld(
         BoardType.Diamond, [2], 3)
+    print(sim_world.get_cells()[4].neighbors)
     # visualize_board(sim_world.board_type, sim_world.current_state)
