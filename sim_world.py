@@ -29,8 +29,8 @@ class SimWorld:
         self.board_size = board_size
         self.open_cell_positions = open_cell_positions
 
-        self.__init_board(board_type, open_cell_positions, board_size)
         self.__init_neighbor_cells(board_type, board_size)
+        self.__init_board(board_type, open_cell_positions, board_size)
 
         # TODO check if init board has valid IN_PROGRESS status
         self.current_state_status = StateStatus.IN_PROGRESS
@@ -50,21 +50,26 @@ class SimWorld:
         raise NotImplementedError()
 
     def __init_diamond_board(self, open_cell_positions, board_size):
-        G = nx.grid_2d_graph(board_size, board_size)
+        G = nx.empty_graph(board_size * board_size)
 
-        # Set node-positions for plotting and add diagonal edges
+        # Add all edges
+        for i, cell in enumerate(self.cells):
+            for j, neighbor_cell in enumerate(cell.neighbors):
+                G[i].add_edge(G[i], G[neighbor_cell.index])
+
+        # # Set node-positions for plotting and add diagonal edges
         pos_dict = {}
         for node_key in G.nodes():
             # This line is inspired by Mathias.TA
             pos_dict[node_key] = (-node_key[0] + node_key[1], -
                                   node_key[0] - node_key[1])
-            if node_key[0] != 0 and node_key[1] < (board_size - 1):
-                G.add_edge(node_key, (node_key[0] - 1, node_key[1] + 1))
+            # if node_key[0] != 0 and node_key[1] < (board_size - 1):
+            #     G.add_edge(node_key, (node_key[0] - 1, node_key[1] + 1))
 
-        # Storing the visualization positions on the graph-object
+        # # Storing the visualization positions on the graph-object
         G.graph['pos_dict'] = pos_dict
 
-        # Add Cells to the graph node's ['data']
+        # # Add Cells to the graph node's ['data']
         for i, node_key in enumerate(G.nodes()):
             # status 0 for the cells that are open initially
             if i in open_cell_positions:
@@ -90,8 +95,7 @@ class SimWorld:
                 board_size)
         elif (board_type == BoardType.Diamond):
             # TODO we just rearrange the cell.neighbors list instead
-            self.neighbors_indecies = self.__init_neighbor_cells_diamond(
-                board_size)
+            self.__init_neighbor_cells_diamond(board_size)
         else:
             raise NotImplementedError()
 
@@ -99,56 +103,57 @@ class SimWorld:
         raise NotImplementedError()
 
     def __init_neighbor_cells_diamond(self, board_size):
-        neighbors = {}
+        self.cells = []
         cell_count = board_size**2
 
         for i in range(cell_count):
-            neighbors[i] = []
+            cell = Cell(0, 0)
+            # cells.nei[i] = []
             current_row = i // board_size
 
             # Top
             k = i - board_size
             if(k >= 0):
-                neighbors[i].append(k)
+                cell.neighbors.append(k)
             else:
-                neighbors[i].append(None)
+                cell.neighbors.append(None)
 
             # Top-right
             k = i - board_size + 1
             if(k >= 0 and (k // board_size) == current_row - 1):
-                neighbors[i].append(k)
+                cell.neighbors.append(k)
             else:
-                neighbors[i].append(None)
+                cell.neighbors.append(None)
 
             # Left
             k = i - 1
             if(k >= 0 and (k // board_size) == current_row):
-                neighbors[i].append(k)
+                cell.neighbors.append(k)
             else:
-                neighbors[i].append(None)
+                cell.neighbors.append(None)
 
             # Right
             k = i + 1
             if(k < cell_count and (k // board_size) == current_row):
-                neighbors[i].append(k)
+                cell.neighbors.append(k)
             else:
-                neighbors[i].append(None)
+                cell.neighbors.append(None)
 
             # Bottom-left
             k = i + board_size - 1
             if(k < cell_count and (k // board_size) == current_row + 1):
-                neighbors[i].append(k)
+                cell.neighbors.append(k)
             else:
-                neighbors[i].append(None)
+                cell.neighbors.append(None)
 
             # Bottom
             k = i + board_size
             if(k < cell_count):
-                neighbors[i].append(k)
+                cell.neighbors.append(k)
             else:
-                neighbors[i].append(None)
+                cell.neighbors.append(None)
 
-        return neighbors
+            self.cells.append(cell)
 
     def get_node_key_list(self):
         return list(self.current_state.nodes.keys())
