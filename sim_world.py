@@ -48,15 +48,17 @@ class SimWorld:
         # Add all edges and connect the Cell to the graph_node
         for i, cell in enumerate(self.current_state):
             G.nodes[i]['data'] = cell
-            for neighbor_index in cell.neighbors:
+            for neighbor_index in cell.neighbor_indices:
                 if neighbor_index is not None:
-                    G[i].add_edge(i, neighbor_index)
+                    G.add_edge(i, neighbor_index)
+
         # Set node-positions for plotting
         plot_pos_dict = {}
         for node_key in G.nodes():
+            cell = G.nodes[node_key]['data']
             # This line is inspired by the TA Mathias
-            plot_pos_dict[node_key] = (-G.nodes[node_key]['data'].pos[0] + G.nodes[node_key]['data'].pos[1], -
-                                       G.nodes[node_key]['data'].pos[0] - G.nodes[node_key]['data'].pos[1])
+            plot_pos_dict[node_key] = (-10 * cell.pos[0] + 20 * cell.pos[1], - 10 *
+                                       cell.pos[0])
 
         # Store the plot_pos_dict on the graph-object
         G.graph['plot_pos_dict'] = plot_pos_dict
@@ -88,7 +90,7 @@ class SimWorld:
 
     def __init_neighbor_cells(self, board_type, board_size, open_cell_positions):
         if (board_type == BoardType.Triangle):
-            self.neighbors_indices = self.__init_neighbor_cells_triangle(
+            self.current_state = self.__init_neighbor_cells_triangle(
                 board_size, open_cell_positions)
         elif (board_type == BoardType.Diamond):
             self.current_state = self.__init_cells_diamond(
@@ -310,7 +312,7 @@ class SimWorld:
 
 if __name__ == "__main__":
     sim_world = SimWorld(
-        BoardType.Diamond, [2], 3)
+        BoardType.Triangle, [2], 5)
     nx.draw(sim_world.graph, pos=sim_world.graph.graph['plot_pos_dict'],
             with_labels=True, font_weight='bold')
     plt.show()
