@@ -38,8 +38,11 @@ class SimWorld:
             raise NotImplementedError()
 
     def __init_triangle_board(self, board_size):
-
-        raise NotImplementedError()
+        # TODO implement with Networkx
+        board = [1 for i in range(int((board_size * (board_size + 1)) / 2))]
+        for i in open_cell_positions:
+            board[i] = 0
+        return board
 
     def __init_diamond_board(self, board_size):
         G = nx.empty_graph(len(self.current_state))
@@ -91,7 +94,60 @@ class SimWorld:
             raise NotImplementedError()
 
     def __init_neighbor_cells_triangle(self, board_size, open_cell_positions):
-        raise NotImplementedError()
+        cells = []
+
+        # https://en.wikipedia.org/wiki/Triangular_number
+        cell_count = int((board_size * (board_size + 1)) / 2)
+
+        current_row_width = 1
+        y = 0
+        x = 0
+        for i in range(cell_count):
+            if(x >= current_row_width):
+                y += 1
+                x = 0
+                current_row_width += 1
+
+            # TODO add position to the cell as (y, x)
+            status = 0 if i in open_cell_positions else 1
+            cell = Cell(i, status)
+
+            # Top-left
+            if(x > 0 and y > 0):
+                cell.neighbor_indexes.append(i - current_row_width)
+            else:
+                cell.neighbor_indexes.append(None)
+
+            # Top
+            if(x < current_row_width - 1 and y > 0):
+                cell.neighbor_indexes.append(i - (current_row_width - 1))
+            else:
+                cell.neighbor_indexes.append(None)
+
+            # Left
+            if(x > 0):
+                cell.neighbor_indexes.append(i - 1)
+            else:
+                cell.neighbor_indexes.append(None)
+
+            # Right
+            if(x < current_row_width - 1):
+                cell.neighbor_indexes.append(i + 1)
+            else:
+                cell.neighbor_indexes.append(None)
+
+            # Bottom and bottom-right
+            if(y < board_size - 1):
+                cell.neighbor_indexes.append(i + current_row_width)
+                cell.neighbor_indexes.append(i + current_row_width + 1)
+            else:
+                cell.neighbor_indexes.append(None)
+                cell.neighbor_indexes.append(None)
+
+            x += 1
+            cells.append(cell)
+
+        return cells
 
     def __init_cells_diamond(self, board_size, open_cell_positions):
         cells = []
