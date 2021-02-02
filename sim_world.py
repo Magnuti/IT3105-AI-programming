@@ -3,6 +3,9 @@ from argument_parser import Arguments
 from visualization import visualize_board
 import networkx as nx
 
+# TODO: temporary import for testing
+import matplotlib.pyplot as plt
+
 
 class Cell:
     def __str__(self):
@@ -32,17 +35,33 @@ class SimWorld:
     def __init_board(self, board_type, board_size):
         if(board_type == BoardType.Triangle):
             self.graph = self.__init_triangle_board(board_size)
-        elif(board_type == BoardType.Diamond):
+        elif (board_type == BoardType.Diamond):
             self.graph = self.__init_diamond_board(board_size)
         else:
             raise NotImplementedError()
 
     def __init_triangle_board(self, board_size):
         # TODO implement with Networkx
-        board = [1 for i in range(int((board_size * (board_size + 1)) / 2))]
-        for i in open_cell_positions:
-            board[i] = 0
-        return board
+        G = nx.empty_graph(int((board_size * (board_size + 1)) / 2))
+
+        # TODO: this is duplicate of the version in diamond
+        # Add all edges and connect the Cell to the graph_node
+        for i, cell in enumerate(self.current_state):
+            G.nodes[i]['data'] = cell
+            for neighbor_index in cell.neighbors:
+                if neighbor_index is not None:
+                    G[i].add_edge(i, neighbor_index)
+        # Set node-positions for plotting
+        plot_pos_dict = {}
+        for node_key in G.nodes():
+            # This line is inspired by the TA Mathias
+            plot_pos_dict[node_key] = (-G.nodes[node_key]['data'].pos[0] + G.nodes[node_key]['data'].pos[1], -
+                                       G.nodes[node_key]['data'].pos[0] - G.nodes[node_key]['data'].pos[1])
+
+        # Store the plot_pos_dict on the graph-object
+        G.graph['plot_pos_dict'] = plot_pos_dict
+
+        return G
 
     def __init_diamond_board(self, board_size):
         G = nx.empty_graph(len(self.current_state))
@@ -50,16 +69,17 @@ class SimWorld:
         # Add all edges and connect the Cell to the graph_node
         for i, cell in enumerate(self.current_state):
             G.nodes[i]['data'] = cell
-            for neighbor_index in cell.neighbors:
+            for neighbor_index in cell.neighbor_indices:
                 if neighbor_index is not None:
-                    G[i].add_edge(i, neighbor_index)
+                    G.add_edge(i, neighbor_index)
 
         # Set node-positions for plotting
         plot_pos_dict = {}
         for node_key in G.nodes():
+            cell = G.nodes[node_key]['data']
             # This line is inspired by the TA Mathias
-            plot_pos_dict[node_key] = (-node_key[0] + node_key[1], -
-                                       node_key[0] - node_key[1])
+            plot_pos_dict[node_key] = (-cell.pos[0] + cell.pos[1], -
+                                       cell.pos[0] - cell.pos[1])
 
         # Store the plot_pos_dict on the graph-object
         G.graph['plot_pos_dict'] = plot_pos_dict
@@ -67,13 +87,6 @@ class SimWorld:
         return G
 
     def __init_neighbor_cells(self, board_type, board_size, open_cell_positions):
-        # for node_key in self.current_state.nodes():
-        #     this_cell = self.current_state.nodes[node_key]['data']
-        #     neighbor_cells = []
-        #     for node_key in self.current_state.adj[node_key]:
-        #         neighbor_cells.append(
-        #             self.current_state.nodes[node_key]['data'])
-        #     this_cell.set_neighbors(neighbor_cells)
         if (board_type == BoardType.Triangle):
             self.neighbors_indices = self.__init_neighbor_cells_triangle(
                 board_size, open_cell_positions)
@@ -98,41 +111,40 @@ class SimWorld:
                 x = 0
                 current_row_width += 1
 
-            # TODO add position to the cell as (y, x)
             status = 0 if i in open_cell_positions else 1
-            cell = Cell(i, status)
+            cell = Cell(status=status, pos=(y, x))
 
             # Top-left
             if(x > 0 and y > 0):
-                cell.neighbor_indexes.append(i - current_row_width)
+                cell.neighbor_indices.append(i - current_row_width)
             else:
-                cell.neighbor_indexes.append(None)
+                cell.neighbor_indices.append(None)
 
             # Top
             if(x < current_row_width - 1 and y > 0):
-                cell.neighbor_indexes.append(i - (current_row_width - 1))
+                cell.neighbor_indices.append(i - (current_row_width - 1))
             else:
-                cell.neighbor_indexes.append(None)
+                cell.neighbor_indices.append(None)
 
             # Left
             if(x > 0):
-                cell.neighbor_indexes.append(i - 1)
+                cell.neighbor_indices.append(i - 1)
             else:
-                cell.neighbor_indexes.append(None)
+                cell.neighbor_indices.append(None)
 
             # Right
             if(x < current_row_width - 1):
-                cell.neighbor_indexes.append(i + 1)
+                cell.neighbor_indices.append(i + 1)
             else:
-                cell.neighbor_indexes.append(None)
+                cell.neighbor_indices.append(None)
 
             # Bottom and bottom-right
             if(y < board_size - 1):
-                cell.neighbor_indexes.append(i + current_row_width)
-                cell.neighbor_indexes.append(i + current_row_width + 1)
+                cell.neighbor_indices.append(i + current_row_width)
+                cell.neighbor_indices.append(i + current_row_width + 1)
             else:
-                cell.neighbor_indexes.append(None)
-                cell.neighbor_indexes.append(None)
+                cell.neighbor_indices.append(None)
+                cell.neighbor_indices.append(None)
 
             x += 1
             cells.append(cell)
@@ -197,31 +209,33 @@ class SimWorld:
         return cells
 
     def index_to_coordinate_diamond(self, index, board_size):
-        if index == 0:
-            return (0, 0)
         count = 0
-        for i in range(board_size):
-            for j in range(board_size):
-                count += 1
+        for y in range(board_size):
+            for x in range(board_size):
                 if index == count:
-                    return (i, j)
+                    return (y, x)
+                count += 1
         raise IndexError(
             f"index '{index}' is not within the bounds given by board_size")
 
+    # TODO: remove?
     def get_node_key_list(self):
         return list(self.current_state.nodes.keys())
 
+    # TODO: remove?
     def get_cell_from_index(self, index):
         node_keys = self.get_node_key_list()
         return self.current_state.nodes[node_keys[index]]['data']
 
+    # TODO: remove?
     def get_cells(self):
         # TODO doing this method for each move may be unnecessary, maybe just store the cells in the sim_world class?
         return list(nx.get_node_attributes(self.current_state, 'data').values())
 
     def reset_board(self):
+        self.__init_neighbor_cells(self.board_type, self.board_size)
         self.__init_board(
-            self.board_type, self.open_cell_positions, self.board_size)
+            self.board_type, self.board_size)
 
     # TODO
     def pick_new_state(self, state):
@@ -297,5 +311,8 @@ class SimWorld:
 if __name__ == "__main__":
     sim_world = SimWorld(
         BoardType.Diamond, [2], 3)
+    nx.draw(sim_world.graph, pos=sim_world.graph.graph['plot_pos_dict'],
+            with_labels=True, font_weight='bold')
+    plt.show()
     # print(sim_world.get_cells()[4].neighbors)
     # visualize_board(sim_world.board_type, sim_world.current_state)
