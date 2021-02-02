@@ -235,7 +235,8 @@ class SimWorld:
         return self.current_state.nodes[node_keys[index]]['data']
 
     def reset_board(self):
-        self.__init_neighbor_cells(self.board_type, self.board_size)
+        self.__init_neighbor_cells(
+            self.board_type, self.board_size, self.open_cell_positions)
         self.__init_board(
             self.board_type, self.board_size)
 
