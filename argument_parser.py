@@ -70,17 +70,24 @@ class Arguments:
         self.visualize = visualize
         self.frame_time = frame_time
 
+        indexes = []
         # Calculate 1D indexes from 2D [x, y] positions
         if(self.board_type == BoardType.Triangle):
-            raise NotImplementedError()
-        if(self.board_type == BoardType.Diamond):
-            indexes = []
+            for (y, x) in open_cell_positions:
+                cells_before_this_cell = 0
+                for i in range(y + 1):
+                    if i < y:
+                        cells_before_this_cell += i + 1
+                    else:
+                        cells_before_this_cell += x + 1
+                indexes.append(cells_before_this_cell - 1)
+        elif(self.board_type == BoardType.Diamond):
             for (y, x) in open_cell_positions:
                 indexes.append(y * self.board_size + x)
-
-            self.open_cell_positions = indexes
         else:
             raise NotImplementedError()
+
+        self.open_cell_positions = indexes
 
     def __str__(self):
         x = "Arguments: {\n"
