@@ -2,6 +2,7 @@ from constants import *
 from argument_parser import Arguments
 from visualization import visualize_board
 import networkx as nx
+import copy
 
 # TODO: temporary import for testing
 import matplotlib.pyplot as plt
@@ -210,6 +211,10 @@ class SimWorld:
             cells.append(cell)
         return cells
 
+    def reassign_cells_to_graph(self, cells):
+        for i in range(len(cells)):
+            self.graph.nodes[i]['data'] = cell
+
     def index_to_coordinate_diamond(self, index, board_size):
         count = 0
         for y in range(board_size):
@@ -229,11 +234,6 @@ class SimWorld:
         node_keys = self.get_node_key_list()
         return self.current_state.nodes[node_keys[index]]['data']
 
-    # TODO: remove?
-    def get_cells(self):
-        # TODO doing this method for each move may be unnecessary, maybe just store the cells in the sim_world class?
-        return list(nx.get_node_attributes(self.current_state, 'data').values())
-
     def reset_board(self):
         self.__init_neighbor_cells(self.board_type, self.board_size)
         self.__init_board(
@@ -243,6 +243,7 @@ class SimWorld:
     def pick_new_state(self, state):
         # ? Check if state is in child_states maybe for security
         self.current_state = state
+        self.reassign_cells_to_graph(state)
 
     # TODO
     def get_reward_and_state_status(self):
@@ -274,47 +275,65 @@ class SimWorld:
     def __find_child_states_triangle(self):
         raise NotImplementedError()
 
-    # TODO in general
     def __find_child_states_diamond(self):
         child_states = []
         child_states_with_visualization = []
-        # TODO: node_key unused?
-        for i, cell in enumerate(self.get_cells()):
+        for i, cell in enumerate(self.current_state):
             if (cell.status == BoardCell.FULL_CELL.value):
-                # TODO: all "i" may need to be rewritten
-                # TODO: Jonas continue from here
-                for j, neighbor_cell in enumerate(cell.neighbors):
+                for j, neighbor_index in enumerate(cell.neighbors):
 
-                    # if(neighbor_cell_index is None):
-                    #     continue
+                    if(neighbor_index is None):
+                        # outside of the board
+                        continue
 
-                    # TODO: is this still needed?
-                    next_neighbor_cell_index = neighbor_cell.neighbors[j]
-                    # if(next_neighbor_cell_index is None):
-                    # continue
+                    neighbor_cell = self.current_state[neighbor_index]
+                    if neighbor_cell.status != BoardCell.FULL_CELL.value:
+                        # if this neighbor_cell does not contain Peg, then no child state
+                        continue
 
-                    if(neighbor_cell.status == BoardCell.FULL_CELL.value and self.current_state[next_neighbor_cell_index] == BoardCell.EMPTY_CELL.value):
-                        new_board = self.current_state.copy()
-                        new_board[i] = BoardCell.EMPTY_CELL.value
-                        new_board[neighbor_cell_index] = BoardCell.EMPTY_CELL.value
-                        new_board[next_neighbor_cell_index] = BoardCell.FULL_CELL.value
-                        child_states.append(new_board)
+                    # index of next cell in the same direction as neighbor_index
+                    next_neighbor_index = self.current_state[neighbor_index].neighbors[j]
+                    if (next_neighbor_index is None):
+                        # outside of the board
+                        continue
 
-                        new_board_with_visualization = self.current_state.copy()
-                        new_board_with_visualization[i] = BoardCell.JUMPED_FROM_CELL.value
-                        new_board_with_visualization[neighbor_cell_index] = BoardCell.PRUNED_CELL.value
-                        new_board_with_visualization[next_neighbor_cell_index] = BoardCell.JUMPED_TO_CELL.value
+                    if(self.current_state[next_neighbor_index].status == BoardCell.EMPTY_CELL.value):
+                        new_state = self.current_state.copy()
+
+                        # make copies of Cells that needs a new status
+                        new_state[i] = copy.copy(new_state[i])
+                        new_state[i].status = BoardCell.EMPTY_CELL.value
+                        new_state[neighbor_index] = copy.copy(
+                            new_state[neighbor_index])
+                        new_state[neighbor_index].status = BoardCell.EMPTY_CELL.value
+                        new_state[next_neighbor_index] = copy.copy(
+                            new_state[next_neighbor_index])
+                        new_state[next_neighbor_index].status = BoardCell.FULL_CELL.value
+                        child_states.append(new_state)
+
+                        new_state_with_visualization = self.current_state.copy()
+                        # make copies of Cells that needs a new status
+                        new_state_with_visualization[i] = copy.copy(
+                            new_state_with_visualization[i])
+                        new_state_with_visualization[i] = BoardCell.JUMPED_FROM_CELL.value
+                        new_state_with_visualization[neighbor_index] = copy.copy(
+                            new_state_with_visualization[neighbor_index])
+                        new_state_with_visualization[neighbor_index] = BoardCell.PRUNED_CELL.value
+                        new_state_with_visualization[neighbor_index] = copy.copy(
+                            new_state_with_visualization[neighbor_index])
+                        new_state_with_visualization[next_neighbor_index] = copy.copy(
+                            new_state_with_visualization[next_neighbor_index])
+                        new_state_with_visualization[next_neighbor_index] = BoardCell.JUMPED_TO_CELL.value
                         child_states_with_visualization.append(
-                            new_board_with_visualization)
+                            new_state_with_visualization)
 
         return child_states, child_states_with_visualization
 
 
-if __name__ == "__main__":
-    sim_world = SimWorld(
-        BoardType.Triangle, [2], 5)
-    nx.draw(sim_world.graph, pos=sim_world.graph.graph['plot_pos_dict'],
-            with_labels=True, font_weight='bold')
-    plt.show()
-    # print(sim_world.get_cells()[4].neighbors)
-    # visualize_board(sim_world.board_type, sim_world.current_state)
+# if __name__ == "__main__":
+#     sim_world = SimWorld(
+#         BoardType.Triangle, [2], 5)
+#     nx.draw(sim_world.graph, pos=sim_world.graph.graph['plot_pos_dict'],
+#             with_labels=True, font_weight='bold')
+#     plt.show()
+#     # visualize_board(sim_world.board_type, sim_world.current_state)
