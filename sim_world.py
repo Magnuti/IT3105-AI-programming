@@ -239,9 +239,8 @@ class SimWorld:
         self.__init_board(
             self.board_type, self.board_size)
 
-    # TODO
     def pick_new_state(self, state):
-        # ? Check if state is in child_states maybe for security
+        # TODO Check if state is in child_states maybe for security
         self.current_state = state
         self.reassign_cells_to_graph(state)
 
@@ -263,19 +262,7 @@ class SimWorld:
     def get_remaining_pegs(self):
         return self.current_state.count(1)
 
-    # TODO
     def find_child_states(self):
-        if(self.board_type == BoardType.Triangle):
-            return self.__find_child_states_triangle()
-        elif(self.board_type == BoardType.Diamond):
-            return self.__find_child_states_diamond()
-        else:
-            raise NotImplementedError()
-
-    def __find_child_states_triangle(self):
-        raise NotImplementedError()
-
-    def __find_child_states_diamond(self):
         child_states = []
         child_states_with_visualization = []
         for i, cell in enumerate(self.current_state):
