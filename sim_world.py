@@ -89,8 +89,12 @@ class SimWorld:
         return list(self.current_state.nodes.keys())
 
     def get_cell_from_index(self, index):
-        nodes = self.get_node_key_list()
-        return self.current_state.nodes[nodes[index]]['data']
+        node_keys = self.get_node_key_list()
+        return self.current_state.nodes[node_keys[index]]['data']
+
+    def get_cells(self):
+        # TODO doing this method for each move may be unnecessary, maybe just store the cells in the sim_world class?
+        return nx.get_node_attributes(self.current_state, 'data')
 
     def reset_board(self):
         self.__init_board(
@@ -131,24 +135,26 @@ class SimWorld:
     def __find_child_states_triangle(self):
         raise NotImplementedError()
 
-    # TODO
+    # TODO in general
     def __find_child_states_diamond(self):
         child_states = []
         child_states_with_visualization = []
         # TODO: node_key unused?
-        for i, node_key in enumerate(self.get_node_key_list()):
-            if (self.get_cell_from_index(i).status == BoardCell.FULL_CELL.value):
+        for i, cell in enumerate(self.get_cells()):
+            if (cell.status == BoardCell.FULL_CELL.value):
                 # TODO: all "i" may need to be rewritten
                 # TODO: Jonas continue from here
-                for j, neighbor_cell_index in enumerate(self.neighbors_indices[i]):
-                    if(neighbor_cell_index is None):
-                        continue
+                for j, neighbor_cell in enumerate(cell.neighbors):
 
-                    next_neighbor_cell_index = self.neighbors_indices[neighbor_cell_index][j]
-                    if(next_neighbor_cell_index is None):
-                        continue
+                    # if(neighbor_cell_index is None):
+                    #     continue
 
-                    if(self.current_state[neighbor_cell_index] == BoardCell.FULL_CELL.value and self.current_state[next_neighbor_cell_index] == BoardCell.EMPTY_CELL.value):
+                    # TODO: is this still needed?
+                    next_neighbor_cell_index = neighbor_cell.neighbors[j]
+                    # if(next_neighbor_cell_index is None):
+                    # continue
+
+                    if(neighbor_cell.status == BoardCell.FULL_CELL.value and self.current_state[next_neighbor_cell_index] == BoardCell.EMPTY_CELL.value):
                         new_board = self.current_state.copy()
                         new_board[i] = BoardCell.EMPTY_CELL.value
                         new_board[neighbor_cell_index] = BoardCell.EMPTY_CELL.value
