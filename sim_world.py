@@ -16,12 +16,6 @@ class Cell:
         self.neighbor_indexes = []
         self.pos = pos
 
-    def set_neighbor_indexes(self, indexList):
-        self.neighbor_indexes = indexList
-
-    def set_status(self, status):
-        self.status = status
-
 
 class SimWorld:
     def __init__(self, board_type, open_cell_positions, board_size):
@@ -100,7 +94,7 @@ class SimWorld:
         raise NotImplementedError()
 
     def __init_cells_diamond(self, board_size, open_cell_positions):
-        self.cells = []
+        cells = []
         cell_count = board_size**2
 
         for i in range(cell_count):
@@ -152,8 +146,8 @@ class SimWorld:
             else:
                 neighbor_indexes.append(None)
 
-            cell.set_neighbor_indexes(neighbor_indexes)
-            self.cells.append(cell)
+            cell.neighbor_indexes = neighbor_indexes
+            cells.append(cell)
         return cells
 
     def index_to_coordinate_diamond(self, index, board_size):
