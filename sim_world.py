@@ -243,11 +243,8 @@ class SimWorld:
     def get_current_state_statuses(self):
         return list(map(lambda x: x.status, self.current_state))
 
-    # TODO
     def get_reward_and_state_status(self):
-        # TODO: new get_pegs_func
         pegs = self.get_remaining_pegs()
-        # print(pegs)
         if(pegs == 1):
             # TODO experiment with different rewards
             return 100, StateStatus.SUCCESS_FINISH
@@ -259,7 +256,6 @@ class SimWorld:
 
         return 0, StateStatus.IN_PROGRESS
 
-    # TODO:
     def get_remaining_pegs(self):
         # Used if state is statuses
         # return self.current_state.count(1)

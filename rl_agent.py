@@ -207,7 +207,7 @@ class RL_agent:
                 action = new_action
 
                 # visualize current game if it's in visualize_training_episodes or this is last episode
-                if(self.visualize and (episode in self.visualize_training_episodes or episode == self.episodes - 2)):
+                if (self.visualize and (episode in self.visualize_training_episodes or episode == self.episodes - 1)):
                     visualize_board(self.sim_world.graph,
                                     new_state_with_visualization, episode=episode)
                     time.sleep(self.frame_time)
@@ -215,7 +215,7 @@ class RL_agent:
             remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
 
             self.epsilon -= self.epsilon_decay_value
-            if(episode == self.episodes - 2):
+            if (episode == self.episodes - 2):
                 self.epsilon = 0  # Target policy for last run
 
             self.actor.set_epsilon(self.epsilon)
