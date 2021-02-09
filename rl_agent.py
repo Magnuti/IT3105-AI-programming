@@ -56,8 +56,6 @@ class CriticFuncApp:
             self.discount_factor, self.eligibility_decay)
 
 
-# TODO make a Critic interface and CriticTable, CriticFuncApp inheritance ??
-
 class CriticTable:
     # This critic is state-based, not state-action-pair-based
     # so, we use V(s) instead of Q(s,a)
@@ -206,8 +204,7 @@ class RL_agent:
             # For each step of the episode
             while state_status == StateStatus.IN_PROGRESS:
                 new_state = self.successor_states[action]
-                new_state_with_visualization = self.successor_states_with_visualization[
-                    action]
+                new_state_with_visualization = self.successor_states_with_visualization[action]
                 self.sim_world.pick_new_state(new_state)
                 reward, state_status = self.sim_world.get_reward_and_state_status()
                 self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
