@@ -203,7 +203,8 @@ class RL_agent:
                 state = new_state
                 action = new_action
 
-                if(self.visualize and episode in self.visualize_training_episodes):
+                # visualize current game if it's in visualize_training_episodes or this is last episode
+                if(self.visualize and (episode in self.visualize_training_episodes or episode == self.episodes - 2)):
                     # TODO create automatic visualization animation with given frame rate by args
                     visualize_board(self.sim_world.graph,
                                     new_state_with_visualization, episode=episode)

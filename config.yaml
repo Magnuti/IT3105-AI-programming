@@ -30,7 +30,8 @@ discount_factor_actor: 0.9
 epsilon: 0.5
 
 visualize: True
-# List of training-episodes to visualize (episode 1 has index 0)
+# List of training-episodes to visualize (episode 1 has index 0).
+# The last episode will always be visualized and greedy, given that visualize is True.
 visualize_training_episodes: [10, 50, 99]
 # Delay between frames in seconds for visualization
 frame_time: 0.2

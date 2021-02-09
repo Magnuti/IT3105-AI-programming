@@ -4,9 +4,6 @@ from visualization import visualize_board
 import networkx as nx
 import copy
 
-# TODO: temporary import for testing
-import matplotlib.pyplot as plt
-
 
 class Cell:
     def __str__(self):
@@ -27,7 +24,9 @@ class SimWorld:
         self.board_size = board_size
         self.open_cell_positions = open_cell_positions
 
-        self.__init_neighbor_cells(board_type, board_size, open_cell_positions)
+        # A list of cells
+        self.current_state = self.__init_neighbor_cells(
+            board_type, board_size, open_cell_positions)
         self.__init_board(board_type, board_size)
 
         # TODO check if init board has valid IN_PROGRESS status
@@ -42,7 +41,6 @@ class SimWorld:
             raise NotImplementedError()
 
     def __init_triangle_board(self, board_size):
-        # TODO implement with Networkx
         G = nx.empty_graph(int((board_size * (board_size + 1)) / 2))
 
         # TODO: this is duplicate of the version in diamond
@@ -91,10 +89,10 @@ class SimWorld:
 
     def __init_neighbor_cells(self, board_type, board_size, open_cell_positions):
         if (board_type == BoardType.Triangle):
-            self.current_state = self.__init_neighbor_cells_triangle(
+            return self.__init_neighbor_cells_triangle(
                 board_size, open_cell_positions)
         elif (board_type == BoardType.Diamond):
-            self.current_state = self.__init_cells_diamond(
+            return self.__init_cells_diamond(
                 board_size, open_cell_positions)
         else:
             raise NotImplementedError()
@@ -244,12 +242,13 @@ class SimWorld:
     # TODO
     def get_reward_and_state_status(self):
         # TODO: new get_pegs_func
-        pegs = self.current_state.count(1)
+        pegs = self.get_remaining_pegs()
         if(pegs == 1):
             # TODO experiment with different rewards
             return 100, StateStatus.SUCCESS_FINISH
 
-        child_states, _ = self.find_child_states()  # TODO duplicate call somewhere
+        # TODO this func also gets called from the RL_agent, try combining
+        child_states, _ = self.find_child_states()
         if(len(child_states) == 0):
             return -1, StateStatus.INCOMPLETE_FINISH
 
@@ -257,7 +256,10 @@ class SimWorld:
 
     # TODO:
     def get_remaining_pegs(self):
-        return self.current_state.count(1)
+        # Used if state is statuses
+        # return self.current_state.count(1)
+        statuses = list(map(lambda x: x.status, self.current_state))
+        return statuses.count(1)
 
     def find_child_states(self):
         child_states = []
@@ -301,12 +303,3 @@ class SimWorld:
                             new_state_with_visualization)
 
         return child_states, child_states_with_visualization
-
-
-# if __name__ == "__main__":
-#     sim_world = SimWorld(
-#         BoardType.Triangle, [2], 5)
-#     nx.draw(sim_world.graph, pos=sim_world.graph.graph['plot_pos_dict'],
-#             with_labels=True, font_weight='bold')
-#     plt.show()
-#     # visualize_board(sim_world.board_type, sim_world.current_state)
