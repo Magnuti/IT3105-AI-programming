@@ -220,16 +220,16 @@ class SimWorld:
             f"index '{index}' is not within the bounds given by board_size")
 
     # TODO: remove?
-    def get_node_key_list(self):
-        return list(self.current_state.nodes.keys())
+    # def get_node_key_list(self):
+    #     return list(self.current_state.nodes.keys())
 
     # TODO: remove?
-    def get_cell_from_index(self, index):
-        node_keys = self.get_node_key_list()
-        return self.current_state.nodes[node_keys[index]]['data']
+    # def get_cell_from_index(self, index):
+    #     node_keys = self.get_node_key_list()
+    #     return self.current_state.nodes[node_keys[index]]['data']
 
     def reset_board(self):
-        self.__init_neighbor_cells(
+        self.current_state = self.__init_neighbor_cells(
             self.board_type, self.board_size, self.open_cell_positions)
         self.__init_board(
             self.board_type, self.board_size)
@@ -239,10 +239,15 @@ class SimWorld:
         for i, cell in enumerate(self.current_state):
             cell.status = new_state[i]
 
+    # this is directly called from rl_agent.py
+    def get_current_state_statuses(self):
+        return list(map(lambda x: x.status, self.current_state))
+
     # TODO
     def get_reward_and_state_status(self):
         # TODO: new get_pegs_func
         pegs = self.get_remaining_pegs()
+        # print(pegs)
         if(pegs == 1):
             # TODO experiment with different rewards
             return 100, StateStatus.SUCCESS_FINISH
@@ -258,7 +263,7 @@ class SimWorld:
     def get_remaining_pegs(self):
         # Used if state is statuses
         # return self.current_state.count(1)
-        statuses = list(map(lambda x: x.status, self.current_state))
+        statuses = self.get_current_state_statuses()
         return statuses.count(1)
 
     def find_child_states(self):
