@@ -26,9 +26,9 @@ class Arguments:
         frame_time = config_data["frame_time"]
 
         if(board_type == BoardType.Triangle.value):
-            raise NotImplementedError()
+            pass
         elif(board_type == BoardType.Diamond.value):
-            if(board_size == 4 and len(open_cell_positions) == 1 and (open_cell_positions[0] == [1, 1] or open_cell_positions[0] == [2, 2])):
+            if(board_size == 4 and len(open_cell_positions) == 1 and ([1, 1] in open_cell_positions or [2, 2] in open_cell_positions)):
                 print(
                     "WARNING: A diamond board of size 4 can only be solved with center positions [1, 2] or [2, 1], not [1, 1] or [2, 2].")
         else:
@@ -38,9 +38,11 @@ class Arguments:
             raise ValueError(
                 "nn_dim must have a valid neural network structure.")
 
-        if(board_type == BoardType.Triangle.value):
-            raise NotImplementedError()
-        if(board_type == BoardType.Diamond.value):
+        if (board_type == BoardType.Triangle.value):
+            pass
+            # TODO: implement bounds check for triangle
+            # raise NotImplementedError()
+        elif (board_type == BoardType.Diamond.value):
             for (x, y) in open_cell_positions:
                 if(x >= board_size or y >= board_size):
                     raise ValueError(
