@@ -21,6 +21,7 @@ class Arguments:
         discount_factor_critic = config_data["discount_factor_critic"]
         discount_factor_actor = config_data["discount_factor_actor"]
         epsilon = config_data["epsilon"]
+        epsilon_decay = config_data["epsilon_decay"]
         visualize = config_data["visualize"]
         frame_time = config_data["frame_time"]
 
@@ -67,6 +68,7 @@ class Arguments:
         self.discount_factor_critic = discount_factor_critic
         self.discount_factor_actor = discount_factor_actor
         self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
         self.visualize = visualize
         self.frame_time = frame_time
 
