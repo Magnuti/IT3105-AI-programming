@@ -8,7 +8,6 @@ from sim_world import SimWorld
 from constants import CriticType, StateStatus
 from visualization import visualize_board, plot_performance
 from function_approximator import FunctionApproximator
-from split_gd import SplitGD
 
 
 # --- Terminology ---
@@ -30,58 +29,34 @@ def make_state_hashable(state):
 
 class CriticFuncApp:
     def __init__(self, nn_dims, discount_factor, learning_rate, eligibility_decay):
-        func_app = FunctionApproximator(nn_dims)
-        self.split_gd_model = SplitGD(func_app.build_network())
-        # self.model = func_app.build_network()
+        self.func_app = FunctionApproximator(nn_dims)
+        self.func_app.build_network(lrate=learning_rate)
 
         self.nn_dims = nn_dims
         self.discount_factor = discount_factor  # γ
         self.learning_rate = learning_rate
         self.eligibility_decay = eligibility_decay  # aka. trace decay λ
 
-        # Holds the eligibilities for each weight on a layer
-        # self.eligibilities[0] is empty
-        # self.eligibilities[1] holds a np.darray of shape (neuron_count_layer_1, neuron_count_layer_0)
-        # so, self.eligibilities[5][2][3] specifies the eligibility for the weight to neuron 2 in
-        # layer 5 from neuron 3 in layer 4
-        self.eligibilities = []
-        for i, neuron_count in enumerate(nn_dims):
-            if(i == 0):
-                self.eligibilities.append(np.empty(1))
-                continue
-            prev_layer_neuron_count = nn_dims[i - 1]
-            eligibilities_on_this_layer = np.zeros(
-                (neuron_count, prev_layer_neuron_count))
-            self.eligibilities.append(eligibilities_on_this_layer)
-
     def new_episode(self):
-        # Reset eligibilities
-        for i, eligibility_matrix in enumerate(self.eligibilities):
-            eligibility_matrix.fill(0)
-            self.eligibilities[i] = eligibility_matrix
+        self.func_app.reset_eligibilities()
 
     def update_TD_error(self, state, new_state, reward):
         state = tf.convert_to_tensor([state])
         new_state = tf.convert_to_tensor([new_state])
-        self.TD_error = reward + self.discount_factor * \
-            self.split_gd_model.model(new_state) - \
-            self.split_gd_model.model(state)
+        TD_error_tensor = reward + self.discount_factor * \
+            self.func_app.model(new_state) - self.func_app.model(state)
+        self.TD_error = TD_error_tensor.numpy()[0, 0]
 
-    def set_state_eligibility(self, state, value=1.0):
-        pass
-        # self.eligibilities[make_state_hashable(state)] = value
+    def fit_model(self, state):
+        self.func_app.fit(state, self.learning_rate,
+                          self.TD_error, verbosity=0)
 
-    def update_state_value(self, state):
-        # ? This one should not do anything I am right
-        # ? Maybe update weight somewhere tho
-        pass
-
-    def decay_state_eligibility(self, state):
-        pass
-        # raise NotImplementedError()
+    def decay_all_eligibilities(self):
+        self.func_app.decay_eligibilities(
+            self.discount_factor, self.eligibility_decay)
 
 
-# TODO make a Critic interface and CriticTable, CriticFuncApp inheritance
+# TODO make a Critic interface and CriticTable, CriticFuncApp inheritance ??
 
 class CriticTable:
     # This critic is state-based, not state-action-pair-based
@@ -144,7 +119,7 @@ class Actor:
         for key in self.eligibilities.keys():
             self.eligibilities[key] = 0
 
-    def set_TD_error(self, TD_error):
+    def set_TD_error(self, TD_error):  # TODO remove unused function
         self.TD_error = TD_error
 
     def set_epsilon(self, epsilon):
@@ -231,44 +206,91 @@ class RL_agent:
                 state, len(self.successor_states))
             _, state_status = self.sim_world.get_reward_and_state_status()
 
-            # For each step of the episode
-            while state_status == StateStatus.IN_PROGRESS:
-                new_state = self.successor_states[action]
-                new_state_with_visualization = self.successor_states_with_visualization[action]
-                self.sim_world.pick_new_state(new_state)
-                reward, state_status = self.sim_world.get_reward_and_state_status()
-                self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
+            if(self.critic_type == CriticType.TABLE):
+                # For each step of the episode
+                while state_status == StateStatus.IN_PROGRESS:
+                    new_state = self.successor_states[action]
+                    new_state_with_visualization = self.successor_states_with_visualization[
+                        action]
+                    self.sim_world.pick_new_state(new_state)
+                    reward, state_status = self.sim_world.get_reward_and_state_status()
+                    self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
 
-                new_action = self.actor.get_next_action(
-                    new_state, len(self.successor_states))
+                    new_action = self.actor.get_next_action(
+                        new_state, len(self.successor_states))
 
-                SAP_list_in_current_episode.append((state, action))
+                    SAP_list_in_current_episode.append((state, action))
 
-                self.actor.set_SAP_eligibility((state, action))
+                    self.actor.set_SAP_eligibility((state, action))
 
-                self.critic.update_TD_error(state, new_state, reward)
-                self.critic.set_state_eligibility(state)
+                    self.critic.update_TD_error(state, new_state, reward)
+                    self.critic.set_state_eligibility(state)
 
-                # For SAP so far in this episode
-                for (s, a) in SAP_list_in_current_episode:
-                    # TODO restrict to only those that have eligibilites > 0 for performance gain
-                    self.critic.update_state_value(s)
-                    self.critic.decay_state_eligibility(s)
+                    # For SAP so far in this episode
+                    for (s, a) in SAP_list_in_current_episode:
+                        # TODO restrict to only those that have eligibilites > 0 for performance gain
 
-                    self.actor.update_SAP_policy((s, a), self.critic.TD_error)
-                    self.actor.decay_SAP_eligibility((s, a))
+                        self.critic.update_state_value(s)
+                        self.critic.decay_state_eligibility(s)
 
-                state = new_state
-                action = new_action
+                        self.actor.update_SAP_policy(
+                            (s, a), self.critic.TD_error)
+                        self.actor.decay_SAP_eligibility((s, a))
 
-                if(self.visualize and episode == self.episodes - 1):
-                    # TODO create automatic visualization animation with given frame rate by args
-                    visualize_board(self.sim_world.board_type,
-                                    new_state_with_visualization)
+                    state = new_state
+                    action = new_action
+
+                    if(self.visualize and episode == self.episodes - 1):
+                        # TODO create automatic visualization animation with given frame rate by args
+                        visualize_board(self.sim_world.board_type,
+                                        new_state_with_visualization)
+            elif(self.critic_type == CriticType.NEURAL_NETWORK):
+                # For each step of the episode
+                while state_status == StateStatus.IN_PROGRESS:
+                    new_state = self.successor_states[action]
+                    new_state_with_visualization = self.successor_states_with_visualization[
+                        action]
+                    self.sim_world.pick_new_state(new_state)
+                    reward, state_status = self.sim_world.get_reward_and_state_status()
+                    self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
+
+                    new_action = self.actor.get_next_action(
+                        new_state, len(self.successor_states))
+
+                    SAP_list_in_current_episode.append((state, action))
+
+                    self.actor.set_SAP_eligibility((state, action))
+
+                    self.critic.update_TD_error(state, new_state, reward)
+                    self.critic.fit_model(state)
+
+                    self.critic.decay_all_eligibilities()
+
+                    # For SAP so far in this episode
+                    for (s, a) in SAP_list_in_current_episode:
+                        # TODO restrict to only those that have eligibilites > 0 for performance gain
+
+                        # self.critic.update_state_value(s)
+                        # self.critic.decay_state_eligibility(s)
+
+                        self.actor.update_SAP_policy(
+                            (s, a), self.critic.TD_error)
+                        self.actor.decay_SAP_eligibility((s, a))
+
+                    state = new_state
+                    action = new_action
+
+                    if(self.visualize and episode == self.episodes - 1):
+                        # TODO create automatic visualization animation with given frame rate by args
+                        visualize_board(self.sim_world.board_type,
+                                        new_state_with_visualization)
+            else:
+                raise NotImplementedError()
 
             remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
 
-            self.epsilon -= self.epsilon_decay_value
+            # self.epsilon -= self.epsilon_decay_value
+            self.epsilon = self.epsilon * 0.99  # TODO take ratio as config
             if(episode == self.episodes - 2):
                 self.epsilon = 0  # Target policy for last run
 
