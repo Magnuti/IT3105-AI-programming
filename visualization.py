@@ -1,34 +1,28 @@
 import matplotlib.pyplot as plt
 from math import sqrt
 import networkx as nx
+# import time
 
-from constants import *
+# from constants import *
 # import pprint
+
+node_fillcolors = ['white', 'black', 'white', 'white', '#79eb44']
+node_edgecolors = ['black', 'black', 'red', '#79eb44', 'black']
 
 
 def plot_performance(remaining_pegs_list):
+    plt.clf()
     plt.plot(remaining_pegs_list)
     plt.show()
 
 
-def visualize_board(graph, state):
-    reassign_cells_to_graph(graph, state)
+def visualize_board(graph, state, episode):
+    fillcolor_map = list(map(lambda x: node_fillcolors[x], state))
+    edgecolor_map = list(map(lambda x: node_edgecolors[x], state))
 
-    # plt.plot(x_full_cells, y_full_cells, 'o', color="black")
-    # plt.plot(x_open_cells, y_open_cells, 'o',
-    #          markeredgecolor="black", markeredgewidth=2, color="white")
-    # plt.plot(x_pruned_cells, y_pruned_cells, 'o',
-    #          markeredgecolor="red", markeredgewidth=2,  color="white")
-    # plt.plot(x_jumped_from_cells, y_jumped_from_cells, 'o',
-    #          markeredgecolor="green", markeredgewidth=2, color="white")
-    # plt.plot(x_jumped_to_cells, y_jumped_to_cells, 'o',
-    #          markeredgecolor="green", markeredgewidth=2, color="black")
-
+    plt.clf()
+    plt.title(f'Episode {episode}')
     nx.draw(graph, pos=graph.graph['plot_pos_dict'],
-            with_labels=True, font_weight='bold')
-    plt.show()
-
-
-def reassign_cells_to_graph(graph, state):
-    for i in range(len(state)):
-        graph.nodes[i]['data'] = state[i]
+            with_labels=False, node_color=fillcolor_map, edgecolors=edgecolor_map, linewidths=3.0)
+    plt.show(block=False)
+    plt.pause(0.001)

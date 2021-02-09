@@ -22,6 +22,7 @@ class Arguments:
         discount_factor_actor = config_data["discount_factor_actor"]
         epsilon = config_data["epsilon"]
         visualize = config_data["visualize"]
+        visualize_training_episodes = config_data["visualize_training_episodes"]
         frame_time = config_data["frame_time"]
 
         if(board_type == BoardType.Triangle.value):
@@ -68,6 +69,7 @@ class Arguments:
         self.discount_factor_actor = discount_factor_actor
         self.epsilon = epsilon
         self.visualize = visualize
+        self.visualize_training_episodes = visualize_training_episodes
         self.frame_time = frame_time
 
         indexes = []

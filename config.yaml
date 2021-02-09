@@ -30,5 +30,7 @@ discount_factor_actor: 0.9
 epsilon: 0.5
 
 visualize: True
-# Delay between frames in milliseconds for visualization
-frame_time: 1000
+# List of training-episodes to visualize (episode 1 has index 0)
+visualize_training_episodes: [10, 50, 99]
+# Delay between frames in seconds for visualization
+frame_time: 0.2

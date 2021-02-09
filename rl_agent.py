@@ -1,6 +1,7 @@
 from collections import defaultdict
 from enum import Enum
 import random
+import time
 
 from sim_world import SimWorld
 from constants import CriticType, StateStatus
@@ -137,13 +138,15 @@ class Actor:
 
 
 class RL_agent:
-    def __init__(self, sim_world, episodes, critic_type, learning_rate_critic, learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor, discount_factor_critic, discount_factor_actor, epsilon, visualize):
+    def __init__(self, sim_world, episodes, critic_type, learning_rate_critic, learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor, discount_factor_critic, discount_factor_actor, epsilon, visualize, visualize_training_episodes, frame_time):
         self.episodes = episodes
         self.critic_type = critic_type
         self.sim_world = sim_world
         self.epsilon = epsilon  # Decays over time
         self.epsilon_decay_value = epsilon / episodes  # Linear dacay
         self.visualize = visualize
+        self.visualize_training_episodes = visualize_training_episodes
+        self.frame_time = frame_time
 
         self.critic = Critic(critic_type, learning_rate_critic,
                              eligibility_decay_critic, discount_factor_critic)
@@ -200,11 +203,11 @@ class RL_agent:
                 state = new_state
                 action = new_action
 
-                if(self.visualize and episode == self.episodes - 1):
+                if(self.visualize and episode in self.visualize_training_episodes):
                     # TODO create automatic visualization animation with given frame rate by args
                     visualize_board(self.sim_world.graph,
                                     new_state_with_visualization, episode=episode)
-                    time.sleep(0.01)
+                    time.sleep(self.frame_time)
 
             remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
 
