@@ -1,10 +1,6 @@
 import matplotlib.pyplot as plt
 from math import sqrt
 import networkx as nx
-# import time
-
-# from constants import *
-# import pprint
 
 node_fillcolors = ['white', 'black', 'white', 'white', '#79eb44']
 node_edgecolors = ['black', 'black', 'red', '#79eb44', 'black']
