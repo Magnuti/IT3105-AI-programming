@@ -262,7 +262,8 @@ class RL_agent:
             epsilon_history.append(self.epsilon)
 
             # Assuming all boards look the same for now
-            self.sim_world.reset_board()
+            if episode < self.episodes - 1:
+                self.sim_world.reset_board()
 
         if(self.visualize):
             plot_performance(remaining_pegs_list, epsilon_history)
