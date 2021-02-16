@@ -1,8 +1,8 @@
 # [triangle, diamond]
-board_type: diamond
+board_type: triangle
 
 # 4-8 for triangle, 3-6 for diamond
-board_size: 4
+board_size: 5
 
 # Must be in the format [[y, x], [y, x], ...]
 # or
@@ -10,9 +10,9 @@ board_size: 4
 # - [y, x]
 # - ...
 open_cell_positions:
-  - [1, 2]
+  - [3, 1]
 
-episodes: 600
+episodes: 100
 
 # [table, nn]
 critic_type: table
@@ -27,8 +27,11 @@ eligibility_decay_critic: 0.9
 eligibility_decay_actor: 0.9
 discount_factor_critic: 0.9
 discount_factor_actor: 0.9
-epsilon: 0.5
+epsilon: 0.8
 
 visualize: True
-# Delay between frames in milliseconds for visualization
-frame_time: 1000
+# List of training-episodes to visualize (episode 1 has index 0).
+# The last episode will always be visualized and greedy, given that visualize is True.
+visualize_training_episodes: []
+# Delay between frames in seconds for visualization
+frame_time: 4

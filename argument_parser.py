@@ -22,12 +22,13 @@ class Arguments:
         discount_factor_actor = config_data["discount_factor_actor"]
         epsilon = config_data["epsilon"]
         visualize = config_data["visualize"]
+        visualize_training_episodes = config_data["visualize_training_episodes"]
         frame_time = config_data["frame_time"]
 
         if(board_type == BoardType.Triangle.value):
-            raise NotImplementedError()
+            pass
         elif(board_type == BoardType.Diamond.value):
-            if(board_size == 4 and len(open_cell_positions) == 1 and (open_cell_positions[0] == [1, 1] or open_cell_positions[0] == [2, 2])):
+            if(board_size == 4 and len(open_cell_positions) == 1 and ([1, 1] in open_cell_positions or [2, 2] in open_cell_positions)):
                 print(
                     "WARNING: A diamond board of size 4 can only be solved with center positions [1, 2] or [2, 1], not [1, 1] or [2, 2].")
         else:
@@ -37,9 +38,11 @@ class Arguments:
             raise ValueError(
                 "nn_dim must have a valid neural network structure.")
 
-        if(board_type == BoardType.Triangle.value):
-            raise NotImplementedError()
-        if(board_type == BoardType.Diamond.value):
+        if (board_type == BoardType.Triangle.value):
+            pass
+            # TODO: implement bounds check for triangle
+            # raise NotImplementedError()
+        elif (board_type == BoardType.Diamond.value):
             for (x, y) in open_cell_positions:
                 if(x >= board_size or y >= board_size):
                     raise ValueError(
@@ -68,19 +71,27 @@ class Arguments:
         self.discount_factor_actor = discount_factor_actor
         self.epsilon = epsilon
         self.visualize = visualize
+        self.visualize_training_episodes = visualize_training_episodes
         self.frame_time = frame_time
 
+        indexes = []
         # Calculate 1D indexes from 2D [x, y] positions
         if(self.board_type == BoardType.Triangle):
-            raise NotImplementedError()
-        if(self.board_type == BoardType.Diamond):
-            indexes = []
+            for (y, x) in open_cell_positions:
+                cells_before_this_cell = 0
+                for i in range(y + 1):
+                    if i < y:
+                        cells_before_this_cell += i + 1
+                    else:
+                        cells_before_this_cell += x + 1
+                indexes.append(cells_before_this_cell - 1)
+        elif(self.board_type == BoardType.Diamond):
             for (y, x) in open_cell_positions:
                 indexes.append(y * self.board_size + x)
-
-            self.open_cell_positions = indexes
         else:
             raise NotImplementedError()
+
+        self.open_cell_positions = indexes
 
     def __str__(self):
         x = "Arguments: {\n"
