@@ -35,9 +35,19 @@ class Arguments:
         else:
             raise NotImplementedError()
 
-        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dims) < 2):
+        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dims) < 1):
             raise ValueError(
                 "nn_dims must have a valid neural network structure.")
+
+        # Calculate the size of the input layer
+        if board_type == BoardType.Triangle.value:
+            input_layer_size = int((board_size * (board_size + 1)) / 2)
+        elif board_type == BoardType.Diamond.value:
+            input_layer_size = board_size ** 2
+        else:
+            raise NotImplementedError()
+
+        nn_dims.insert(0, input_layer_size)
 
         if (board_type == BoardType.Triangle.value):
             pass

@@ -12,14 +12,16 @@ board_size: 5
 open_cell_positions:
   - [3, 2]
 
-episodes: 100
+episodes: 600
 
 # [table, nn]
 critic_type: nn
 
-# Required if critic: nn
-# Dimension of critic's NN, number of layers and neurons in each layer (e.g. (5, 10, 1) is 3 layers with 5, 10 and 1 neurons)
-nn_dims: [16, 5, 1]
+# Dimension of critic's NN, number of layers and neurons in each layer except the input layer
+# E.g. (5, 10, 1) gives 3 layers (2 hidden layers and one output layer) with 5, 10 and 1 neurons
+# The input layer's size is automatically calculated based on the number of cells on the board
+# nn_dims is required if critic: nn
+nn_dims: [5, 1]
 
 # Remember that it is wise to use a "much lower" learning rate for the critic when it uses a neural network
 learning_rate_critic: 0.001 # 0.1 works for table, 0.001 for nn
@@ -37,4 +39,4 @@ visualize: True
 # The last episode will always be visualized and greedy, given that visualize is True.
 visualize_training_episodes: []
 # Delay between frames in seconds for visualization
-frame_time: 4
+frame_time: 0.5
