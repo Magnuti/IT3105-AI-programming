@@ -240,21 +240,20 @@ class SimWorld:
     def get_current_state_statuses(self):
         return list(map(lambda x: x.status, self.current_state))
 
-    def get_reward_and_state_status(self):
+    def get_reward_and_state_status(self, child_states_length):
         pegs = self.get_remaining_pegs()
         if(pegs == 1):
             # TODO experiment with different rewards
             return 100, StateStatus.SUCCESS_FINISH
 
-        # TODO this func also gets called from the RL_agent, try combining
-        child_states, _ = self.find_child_states()
-        if(len(child_states) == 0):
+        # If no child_states, then this is an end state
+        if(child_states_length == 0):
             return -1, StateStatus.INCOMPLETE_FINISH
 
         return 0, StateStatus.IN_PROGRESS
 
     def get_remaining_pegs(self):
-        # Used if state is statuses
+        # Used if state is statuses:
         # return self.current_state.count(1)
         statuses = self.get_current_state_statuses()
         return statuses.count(1)

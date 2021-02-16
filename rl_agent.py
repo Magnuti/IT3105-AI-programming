@@ -181,8 +181,9 @@ class RL_agent:
                 new_state = self.successor_states[action]
                 new_state_with_visualization = self.successor_states_with_visualization[action]
                 self.sim_world.pick_new_state(new_state)
-                reward, state_status = self.sim_world.get_reward_and_state_status()
                 self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
+                reward, state_status = self.sim_world.get_reward_and_state_status(
+                    len(self.successor_states))
 
                 new_action = self.actor.get_next_action(
                     new_state, len(self.successor_states))
