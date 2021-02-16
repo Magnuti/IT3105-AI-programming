@@ -8,21 +8,25 @@ class FunctionApproximator():
     def __init__(self, nn_dims):
         self.nn_dims = nn_dims
 
-    def build_network(self, lrate=0.01, opt=keras.optimizers.SGD, loss=keras.losses.categorical_crossentropy, act="relu"):
+    def build_network(self, lrate=0.01, opt=keras.optimizers.SGD,
+                      loss=keras.losses.categorical_crossentropy, act="relu"):
         model = keras.models.Sequential()
 
         for i, node_count in enumerate(self.nn_dims):
-            # TODO take activation functions as config input
-            if i == len(self.nn_dims) - 1:
+            if i == 0:
+                model.add(layers.Input(shape=(1, node_count),
+                                       name="Layer_{}".format(i)))
+            elif i == len(self.nn_dims) - 1:
+                # TODO take activation functions as config input
                 model.add(layers.Dense(
-                    node_count, activation="sigmoid", name="Layer{}".format(i)))
-                continue
-            model.add(layers.Dense(node_count, activation=act,
-                                   name="Layer{}".format(i)))
+                    node_count, activation="sigmoid", name="Layer_{}".format(i)))
+            else:
+                model.add(layers.Dense(node_count, activation=act,
+                                       name="Layer_{}".format(i)))
 
         model.compile(optimizer=opt(lr=lrate), loss=loss, metrics=[
                       keras.metrics.categorical_accuracy])
-        # return model
+
         self.model = model
 
     def decay_eligibilities(self, discount_factor, eligibility_decay):
@@ -43,7 +47,7 @@ class FunctionApproximator():
             predictions = self.model(features)
 
             gradients = tape.gradient(predictions, params)
-            
+
             # Initialize eligibilities
             if(self.eligibilities is None):
                 self.eligibilities = []
