@@ -18,10 +18,12 @@ episodes: 1000
 # [table, nn]
 critic_type: nn
 
-# Required if critic: nn
-# Dimension of critic's NN, number of layers and neurons in each layer (e.g. (5, 10, 1) is 3 layers with 5, 10 and 1 neurons)
-nn_dims: [15, 5, 1]
-# nn_dims: [15, 5, 5, 1]
+# Dimension of critic's NN, number of layers and neurons in each layer except the input layer
+# E.g. (5, 10, 1) gives 3 layers (2 hidden layers and one output layer) with 5, 10 and 1 neurons
+# The input layer's size is automatically calculated based on the number of cells on the board
+# nn_dims is required if critic: nn
+nn_dims: [5, 1]
+# nn_dims: [5, 5, 1]
 
 # Remember that it is wise to use a "much lower" learning rate for the critic when it uses a neural network
 learning_rate_critic: 0.001 # 0.1 works for table, 0.001 for nn

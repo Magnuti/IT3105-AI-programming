@@ -206,8 +206,8 @@ class RL_agent:
             _, state_status = self.sim_world.get_reward_and_state_status(
                 len(self.successor_states))
 
-            # TODO plot how epsilon decays over time
             self.epsilon = self.epsilon * self.epsilon_decay
+
             if(episode == self.episodes - 1):
                 self.epsilon = 0  # Target policy for last run
 
