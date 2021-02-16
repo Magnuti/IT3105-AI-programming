@@ -7,7 +7,6 @@ from tensorflow.keras import layers
 class FunctionApproximator():
     def __init__(self, nn_dims):
         self.nn_dims = nn_dims
-        # self.model = self.build_network()
 
     def build_network(self, lrate=0.01, opt=keras.optimizers.SGD, loss=keras.losses.categorical_crossentropy, act="relu"):
         model = keras.models.Sequential()
@@ -45,7 +44,7 @@ class FunctionApproximator():
 
             gradients = tape.gradient(predictions, params)
             
-            # Initialize eligibilies
+            # Initialize eligibilities
             if(self.eligibilities is None):
                 self.eligibilities = []
                 for i, gradient in enumerate(gradients):
