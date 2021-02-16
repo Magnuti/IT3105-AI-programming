@@ -6,9 +6,18 @@ node_fillcolors = ['white', 'black', 'white', 'white', '#79eb44']
 node_edgecolors = ['black', 'black', 'red', '#79eb44', 'black']
 
 
-def plot_performance(remaining_pegs_list):
+def plot_performance(remaining_pegs_list, epsilon_history):
     plt.clf()
-    plt.plot(remaining_pegs_list)
+
+    ax1 = plt.gca()
+    ax1.set_xlabel("Episode")
+    ax1.set_ylabel("Remaining pegs")
+    ax1.plot(remaining_pegs_list)
+
+    ax2 = ax1.twinx()  # Shared x-axis
+    ax2.set_ylabel("Epsilon", color="r")
+    ax2.plot(epsilon_history, color="r")
+
     plt.show()
 
 
