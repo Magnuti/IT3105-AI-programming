@@ -25,8 +25,8 @@ critic_type: table
 nn_dims: [5, 1]
 
 # Remember that it is wise to use a "much lower" learning rate for the critic when it uses a neural network
-learning_rate_critic: 0.001 # 0.1 works for table, 0.001 for nn
-learning_rate_actor: 0.195 # 0.1 works for table, 0.195 for table
+learning_rate_critic: 0.1
+learning_rate_actor: 0.1
 
 eligibility_decay_critic: 0.85
 eligibility_decay_actor: 0.85
