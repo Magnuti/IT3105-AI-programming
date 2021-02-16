@@ -42,14 +42,7 @@ class SimWorld:
 
     def __init_triangle_board(self, board_size):
         G = nx.empty_graph(int((board_size * (board_size + 1)) / 2))
-
-        # TODO: this is duplicate of the version in diamond
-        # Add all edges and connect the Cell to the graph_node
-        for i, cell in enumerate(self.current_state):
-            G.nodes[i]['data'] = cell
-            for neighbor_index in cell.neighbor_indices:
-                if neighbor_index is not None:
-                    G.add_edge(i, neighbor_index)
+        G = self.graph_add_connections(G)
 
         # Set node-positions for plotting
         plot_pos_dict = {}
@@ -66,13 +59,7 @@ class SimWorld:
 
     def __init_diamond_board(self, board_size):
         G = nx.empty_graph(len(self.current_state))
-
-        # Add all edges and connect the Cell to the graph_node
-        for i, cell in enumerate(self.current_state):
-            G.nodes[i]['data'] = cell
-            for neighbor_index in cell.neighbor_indices:
-                if neighbor_index is not None:
-                    G.add_edge(i, neighbor_index)
+        G = self.graph_add_connections(G)
 
         # Set node-positions for plotting
         plot_pos_dict = {}
@@ -218,6 +205,16 @@ class SimWorld:
                 count += 1
         raise IndexError(
             f"index '{index}' is not within the bounds given by board_size")
+
+    # TODO must be changed if state repr. changes to [status]
+    # Add all edges and connect the Cell to the graph_node
+    def graph_add_connections(self, G):
+        for i, cell in enumerate(self.current_state):
+            G.nodes[i]['data'] = cell
+            for neighbor_index in cell.neighbor_indices:
+                if neighbor_index is not None:
+                    G.add_edge(i, neighbor_index)
+        return G
 
     # TODO: remove?
     # def get_node_key_list(self):
