@@ -186,6 +186,7 @@ class RL_agent:
         # Previous state-action-pairs in this episode
         SAP_list_in_current_episode = []
         remaining_pegs_list = []
+        epsilon_history = []
 
         for episode in range(self.episodes):
             if(episode % 100 == 0 or episode == self.episodes - 1):
@@ -258,12 +259,13 @@ class RL_agent:
                     time.sleep(self.frame_time)
 
             remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
+            epsilon_history.append(self.epsilon)
 
             # Assuming all boards look the same for now
             self.sim_world.reset_board()
 
         if(self.visualize):
-            plot_performance(remaining_pegs_list)
+            plot_performance(remaining_pegs_list, epsilon_history)
 
 
 if __name__ == "__main__":
