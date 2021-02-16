@@ -34,7 +34,13 @@ eligibility_decay_actor: 0.85
 discount_factor_critic: 0.85
 discount_factor_actor: 0.85
 epsilon: 1
-epsilon_decay: 0.995 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
+
+# The rate in which the epsilon decreases as given by e <- e * epsilon_decay
+# Not used for epsilon_decay_function: linear
+epsilon_decay: 0.995
+
+# How epsilon should decay [exponential, reversed_sigmoid, linear]
+epsilon_decay_function: exponential
 
 visualize: True
 # List of training-episodes to visualize (episode 1 has index 0).

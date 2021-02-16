@@ -7,7 +7,7 @@ import random
 
 from function_approximator import FunctionApproximator
 from visualization import visualize_board, plot_performance
-from constants import CriticType, StateStatus
+from constants import CriticType, StateStatus, EpsilonDecayFunction
 from sim_world import SimWorld
 
 # --- Terminology ---
@@ -159,16 +159,21 @@ class RL_agent:
     def __init__(self, sim_world, episodes, critic_type, nn_dims, learning_rate_critic,
                  learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor,
                  discount_factor_critic, discount_factor_actor, epsilon, epsilon_decay,
-                 visualize, visualize_training_episodes, frame_time):
+                 epsilon_decay_function, visualize, visualize_training_episodes, frame_time):
         self.episodes = episodes
         self.critic_type = critic_type
         self.nn_dims = nn_dims
         self.sim_world = sim_world
         self.epsilon = epsilon  # Decays over time
-        self.epsilon_decay = epsilon_decay
+        self.epsilon_decay_function = epsilon_decay_function
         self.visualize = visualize
         self.visualize_training_episodes = visualize_training_episodes
         self.frame_time = frame_time
+
+        if epsilon_decay_function == EpsilonDecayFunction.LINEAR:
+            self.epsilon_decay = epsilon / episodes  # Linear decay
+        else:
+            self.epsilon_decay = epsilon_decay
 
         if(critic_type == CriticType.TABLE):
             self.critic = CriticTable(
@@ -195,26 +200,29 @@ class RL_agent:
             self.actor.new_episode()
             SAP_list_in_current_episode.clear()
 
+            if self.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL:
+                self.epsilon *= self.epsilon_decay
+            elif self.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID:
+                # Horizontally flipped Sigmoid
+                self.epsilon = 1 / \
+                    (1+np.exp((episode-(self.episodes/2))/(self.episodes*0.08)))
+            elif self.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
+                self.epsilon -= self.epsilon_decay
+            else:
+                raise NotImplementedError()
+
+            if(episode == self.episodes - 1):
+                self.epsilon = 0  # Target policy for last run
+
             self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
 
             # Init state and action
             state = self.sim_world.get_current_state_statuses()
 
-            # TODO: is it possible that we miss the actual "best" move, by choosing the best initial action according to the agent?
-            action = self.actor.get_best_action(
-                state, len(self.successor_states))
+            action = self.actor.get_next_action(
+                state, len(self.successor_states), self.epsilon)
             _, state_status = self.sim_world.get_reward_and_state_status(
                 len(self.successor_states))
-
-            # TODO: not used, decay in config is also redundant
-            # self.epsilon = self.epsilon * self.epsilon_decay
-
-            # horizontally flipped sigmoid
-            self.epsilon = 1 / \
-                (1+np.exp((episode-(self.episodes/2))/(self.episodes*0.08)))
-
-            if(episode == self.episodes - 1):
-                self.epsilon = 0  # Target policy for last run
 
             # For each step of the episode
             while state_status == StateStatus.IN_PROGRESS:
@@ -244,8 +252,6 @@ class RL_agent:
 
                 # For SAP so far in this episode
                 for (s, a) in SAP_list_in_current_episode:
-                    # TODO restrict to only those that have eligibilites > 0 for performance gain
-
                     if(self.critic_type == CriticType.TABLE):
                         self.critic.update_state_value(s)
                         self.critic.decay_state_eligibility(s)

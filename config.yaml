@@ -10,9 +10,9 @@ board_size: 5
 # - [y, x]
 # - ...
 open_cell_positions:
-  - [3, 2]
+  - [3, 1]
 
-episodes: 1000
+episodes: 2000
 
 # [table, nn]
 critic_type: table
@@ -24,15 +24,21 @@ critic_type: table
 nn_dims: [5, 1]
 
 # Remember that it is wise to use a "much lower" learning rate for the critic when it uses a neural network
-learning_rate_critic: 0.5 # 0.1 works for table, 0.001 for nn
-learning_rate_actor: 0.5 # 0.1 works for table, 0.195 for table
+learning_rate_critic: 0.8 # 0.1 works for table, 0.001 for nn
+learning_rate_actor: 0.8 # 0.1 works for table, 0.195 for table
 
-eligibility_decay_critic: 0.6
-eligibility_decay_actor: 0.6
-discount_factor_critic: 0.85
-discount_factor_actor: 0.85
+eligibility_decay_critic: 0.4
+eligibility_decay_actor: 0.4
+discount_factor_critic: 0.95
+discount_factor_actor: 0.95
 epsilon: 1
-epsilon_decay: 0.9955 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
+
+# The rate in which the epsilon decreases as given by e <- e * epsilon_decay
+# Not used for epsilon_decay_function: linear
+epsilon_decay: 0.9955
+
+# How epsilon should decay [exponential, reversed_sigmoid, linear]
+epsilon_decay_function: exponential
 
 visualize: False
 # List of training-episodes to visualize (episode 1 has index 0).
