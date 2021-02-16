@@ -13,7 +13,7 @@ class Arguments:
         open_cell_positions = config_data["open_cell_positions"]
         episodes = config_data["episodes"]
         critic_type = config_data["critic_type"]
-        nn_dim = config_data["nn_dim"]
+        nn_dims = config_data["nn_dims"]
         learning_rate_critic = config_data["learning_rate_critic"]
         learning_rate_actor = config_data["learning_rate_actor"]
         eligibility_decay_critic = config_data["eligibility_decay_critic"]
@@ -21,6 +21,7 @@ class Arguments:
         discount_factor_critic = config_data["discount_factor_critic"]
         discount_factor_actor = config_data["discount_factor_actor"]
         epsilon = config_data["epsilon"]
+        epsilon_decay = config_data["epsilon_decay"]
         visualize = config_data["visualize"]
         visualize_training_episodes = config_data["visualize_training_episodes"]
         frame_time = config_data["frame_time"]
@@ -34,9 +35,9 @@ class Arguments:
         else:
             raise NotImplementedError()
 
-        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dim) < 2):
+        if(critic_type == CriticType.NEURAL_NETWORK and len(nn_dims) < 2):
             raise ValueError(
-                "nn_dim must have a valid neural network structure.")
+                "nn_dims must have a valid neural network structure.")
 
         if (board_type == BoardType.Triangle.value):
             pass
@@ -62,7 +63,7 @@ class Arguments:
         self.board_size = board_size
         self.episodes = episodes
         self.critic_type = CriticType(critic_type)
-        self.nn_dim = nn_dim
+        self.nn_dims = nn_dims
         self.learning_rate_critic = learning_rate_critic
         self.learning_rate_actor = learning_rate_actor
         self.eligibility_decay_critic = eligibility_decay_critic
@@ -70,6 +71,7 @@ class Arguments:
         self.discount_factor_critic = discount_factor_critic
         self.discount_factor_actor = discount_factor_actor
         self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
         self.visualize = visualize
         self.visualize_training_episodes = visualize_training_episodes
         self.frame_time = frame_time
