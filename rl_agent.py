@@ -206,7 +206,12 @@ class RL_agent:
             _, state_status = self.sim_world.get_reward_and_state_status(
                 len(self.successor_states))
 
-            self.epsilon = self.epsilon * self.epsilon_decay
+            # TODO: not used, decay in config is also redundant
+            # self.epsilon = self.epsilon * self.epsilon_decay
+
+            # horizontally flipped sigmoid
+            self.epsilon = 1 / \
+                (1+np.exp((episode-(self.episodes/2))/(self.episodes*0.08)))
 
             if(episode == self.episodes - 1):
                 self.epsilon = 0  # Target policy for last run
