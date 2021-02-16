@@ -174,7 +174,8 @@ class RL_agent:
             # TODO: is it possible that we miss the actual "best" move, by choosing the best initial action according to the agent?
             action = self.actor.get_best_action(
                 state, len(self.successor_states))
-            _, state_status = self.sim_world.get_reward_and_state_status()
+            _, state_status = self.sim_world.get_reward_and_state_status(
+                len(self.successor_states))
 
             # For each step of the episode
             while state_status == StateStatus.IN_PROGRESS:
