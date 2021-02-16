@@ -48,8 +48,7 @@ class CriticFuncApp:
         self.TD_error = TD_error_tensor.numpy()[0, 0]
 
     def fit_model(self, state):
-        self.func_app.fit(state, self.learning_rate,
-                          self.TD_error, verbosity=0)
+        self.func_app.fit(state, self.learning_rate, self.TD_error)
 
     def decay_all_eligibilities(self):
         self.func_app.decay_eligibilities(

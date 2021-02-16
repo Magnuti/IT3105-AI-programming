@@ -34,7 +34,7 @@ class FunctionApproximator():
     def reset_eligibilities(self):
         self.eligibilities = None
 
-    def fit(self, feature, learning_rate, TD_error, epochs=1, mbs=1, vfrac=0.1, verbosity=1, callbacks=[]):
+    def fit(self, feature, learning_rate, TD_error):
         # params are the trainable variabes, not all variables
         params = self.model.trainable_weights
         features = tf.convert_to_tensor([feature])
@@ -44,7 +44,8 @@ class FunctionApproximator():
             predictions = self.model(features)
 
             gradients = tape.gradient(predictions, params)
-
+            
+            # Initialize eligibilies
             if(self.eligibilities is None):
                 self.eligibilities = []
                 for i, gradient in enumerate(gradients):
