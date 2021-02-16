@@ -10,9 +10,10 @@ board_size: 5
 # - [y, x]
 # - ...
 open_cell_positions:
-  - [3, 1]
+  # [3, 1] and [3, 2] also works for triangle with board size 5
+  - [2, 1]
 
-episodes: 2000
+episodes: 1000
 
 # [table, nn]
 critic_type: table
@@ -40,7 +41,7 @@ epsilon_decay: 0.9955
 # How epsilon should decay [exponential, reversed_sigmoid, linear]
 epsilon_decay_function: exponential
 
-visualize: False
+visualize: True
 # List of training-episodes to visualize (episode 1 has index 0).
 # The last episode will always be visualized and greedy, given that visualize is True.
 visualize_training_episodes: []
