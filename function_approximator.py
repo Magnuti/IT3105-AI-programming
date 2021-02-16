@@ -38,17 +38,19 @@ class FunctionApproximator():
         self.eligibilities = None
 
     def fit(self, feature, learning_rate, TD_error):
-        # params are the trainable variabes, not all variables
+        # params are the trainable variables, not all variables.
+        # all biases and weights in model, one tensor per layer
         params = self.model.trainable_weights
         features = tf.convert_to_tensor([feature])
 
-        with tf.GradientTape() as tape:  # Read up on tf.GradientTape !!
+        with tf.GradientTape() as tape:  # TODO: Read up on tf.GradientTape !!
             # Do not move the line below up above the "with"-block, it will crash unexpectedly
             predictions = self.model(features)
 
+            # gradient for all params <[tensorarray]>
             gradients = tape.gradient(predictions, params)
 
-            # Initialize eligibilities
+            # Initialize eligibilities to zero if non-existent
             if(self.eligibilities is None):
                 self.eligibilities = []
                 for i, gradient in enumerate(gradients):
