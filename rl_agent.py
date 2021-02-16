@@ -1,18 +1,19 @@
+import time
+import tensorflow as tf
+import numpy as np
 from collections import defaultdict
 from enum import Enum
 import random
-import numpy as np
-import tensorflow as tf
 
-from sim_world import SimWorld
-from constants import CriticType, StateStatus
-from visualization import visualize_board, plot_performance
 from function_approximator import FunctionApproximator
-
+from visualization import visualize_board, plot_performance
+from constants import CriticType, StateStatus
+from sim_world import SimWorld
 
 # --- Terminology ---
 # state == board
 # SAP = a (state, action) tuple
+
 
 def make_SAP_hashable(SAP):
     '''
@@ -119,7 +120,7 @@ class Actor:
         Greedy
         '''
         # Π(s), the one with the highest value of Π(s)
-        # Greedy manner, but since we use epsilon-greedy manner we don't need this yet
+        # Greedy manner
         values = []
         for i in range(number_of_child_states):
             SAP = (current_state, i)
@@ -130,10 +131,11 @@ class Actor:
         '''
         Epsilon-greedy
         '''
-        if(number_of_child_states == 0):
+
+        if number_of_child_states == 0:
             return None
 
-        if(random.random() < epsilon):
+        if random.random() < epsilon:
             # Make random choice
             # ? Including the best action yes?
             return random.randrange(number_of_child_states)
@@ -154,7 +156,10 @@ class Actor:
 
 
 class RL_agent:
-    def __init__(self, sim_world, episodes, critic_type, nn_dims, learning_rate_critic, learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor, discount_factor_critic, discount_factor_actor, epsilon, epsilon_decay, visualize):
+    def __init__(self, sim_world, episodes, critic_type, nn_dims, learning_rate_critic,
+                 learning_rate_actor, eligibility_decay_critic, eligibility_decay_actor,
+                 discount_factor_critic, discount_factor_actor, epsilon, epsilon_decay,
+                 visualize, visualize_training_episodes, frame_time):
         self.episodes = episodes
         self.critic_type = critic_type
         self.nn_dims = nn_dims
@@ -162,6 +167,8 @@ class RL_agent:
         self.epsilon = epsilon  # Decays over time
         self.epsilon_decay = epsilon_decay
         self.visualize = visualize
+        self.visualize_training_episodes = visualize_training_episodes
+        self.frame_time = frame_time
 
         if(critic_type == CriticType.TABLE):
             self.critic = CriticTable(
@@ -190,10 +197,13 @@ class RL_agent:
             self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
 
             # Init state and action
-            state = self.sim_world.current_state
+            state = self.sim_world.get_current_state_statuses()
+
+            # TODO: is it possible that we miss the actual "best" move, by choosing the best initial action according to the agent?
             action = self.actor.get_best_action(
                 state, len(self.successor_states))
-            _, state_status = self.sim_world.get_reward_and_state_status()
+            _, state_status = self.sim_world.get_reward_and_state_status(
+                len(self.successor_states))
 
             # TODO plot how epsilon decays over time
             self.epsilon = self.epsilon * self.epsilon_decay
@@ -205,8 +215,9 @@ class RL_agent:
                 new_state = self.successor_states[action]
                 new_state_with_visualization = self.successor_states_with_visualization[action]
                 self.sim_world.pick_new_state(new_state)
-                reward, state_status = self.sim_world.get_reward_and_state_status()
                 self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
+                reward, state_status = self.sim_world.get_reward_and_state_status(
+                    len(self.successor_states))
 
                 new_action = self.actor.get_next_action(
                     new_state, len(self.successor_states), self.epsilon)
@@ -240,10 +251,11 @@ class RL_agent:
                 state = new_state
                 action = new_action
 
-                if(self.visualize and episode == self.episodes - 1):
-                    # TODO create automatic visualization animation with given frame rate by args
-                    visualize_board(self.sim_world.board_type,
-                                    new_state_with_visualization)
+                # visualize current game if it's in visualize_training_episodes or this is last episode
+                if (self.visualize and (episode in self.visualize_training_episodes or episode == self.episodes - 1)):
+                    visualize_board(self.sim_world.graph,
+                                    new_state_with_visualization, episode=episode)
+                    time.sleep(self.frame_time)
 
             remaining_pegs_list.append(self.sim_world.get_remaining_pegs())
 

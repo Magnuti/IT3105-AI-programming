@@ -1,8 +1,8 @@
 # [triangle, diamond]
-board_type: diamond
+board_type: triangle
 
 # 4-8 for triangle, 3-6 for diamond
-board_size: 4
+board_size: 5
 
 # Must be in the format [[y, x], [y, x], ...]
 # or
@@ -10,9 +10,9 @@ board_size: 4
 # - [y, x]
 # - ...
 open_cell_positions:
-  - [1, 2]
+  - [3, 2]
 
-episodes: 600
+episodes: 100
 
 # [table, nn]
 critic_type: nn
@@ -33,5 +33,8 @@ epsilon: 1
 epsilon_decay: 0.99 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
 
 visualize: True
-# Delay between frames in milliseconds for visualization
-frame_time: 1000
+# List of training-episodes to visualize (episode 1 has index 0).
+# The last episode will always be visualized and greedy, given that visualize is True.
+visualize_training_episodes: []
+# Delay between frames in seconds for visualization
+frame_time: 4
