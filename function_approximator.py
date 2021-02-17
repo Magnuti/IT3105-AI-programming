@@ -17,7 +17,6 @@ class FunctionApproximator():
                 model.add(layers.Input(shape=(1, node_count),
                                        name="Layer_{}".format(i)))
             elif i == len(self.nn_dims) - 1:
-                # TODO take activation functions as config input
                 model.add(layers.Dense(
                     node_count, activation="sigmoid", name="Layer_{}".format(i)))
             else:
@@ -43,7 +42,7 @@ class FunctionApproximator():
         params = self.model.trainable_weights
         features = tf.convert_to_tensor([feature])
 
-        with tf.GradientTape() as tape:  # TODO: Read up on tf.GradientTape !!
+        with tf.GradientTape() as tape:
             # Do not move the line below up above the "with"-block, it will crash unexpectedly
             predictions = self.model(features)
 
@@ -62,9 +61,11 @@ class FunctionApproximator():
                 self.eligibilities[i] = tf.add(
                     self.eligibilities[i], gradient)
 
+            # find new "gradients": (TD_error * e_i)
+            # The learning rate is integrated in the model
             for i, gradient in enumerate(gradients):
-                # The learning rate is included in the model
                 # Negative because the gradient descent equation is normally minus, so minus*minus=plus
                 gradients[i] = - tf.multiply(self.eligibilities[i], TD_error)
 
+            # adjust weights with the new gradients
             self.model.optimizer.apply_gradients(zip(gradients, params))

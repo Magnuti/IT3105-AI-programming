@@ -44,7 +44,7 @@ class CriticFuncApp:
     def update_TD_error(self, state, new_state, reward):
         state = tf.convert_to_tensor([state])
         new_state = tf.convert_to_tensor([new_state])
-        # func_app.model(state) -> prediction
+        # func_app.model(state) -> prediction. For init-NN this pred is random.
         TD_error_tensor = reward + self.discount_factor * \
             self.func_app.model(new_state) - self.func_app.model(state)
         # extract number-value from tensor
