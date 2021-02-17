@@ -29,7 +29,6 @@ class SimWorld:
             board_type, board_size, open_cell_positions)
         self.__init_board(board_type, board_size)
 
-        # TODO check if init board has valid IN_PROGRESS status
         self.current_state_status = StateStatus.IN_PROGRESS
 
     def __init_board(self, board_type, board_size):
@@ -206,7 +205,6 @@ class SimWorld:
         raise IndexError(
             f"index '{index}' is not within the bounds given by board_size")
 
-    # TODO must be changed if state repr. changes to [status]
     # Add all edges and connect the Cell to the graph_node
     def graph_add_connections(self, G):
         for i, cell in enumerate(self.current_state):
@@ -216,15 +214,6 @@ class SimWorld:
                     G.add_edge(i, neighbor_index)
         return G
 
-    # TODO: remove?
-    # def get_node_key_list(self):
-    #     return list(self.current_state.nodes.keys())
-
-    # TODO: remove?
-    # def get_cell_from_index(self, index):
-    #     node_keys = self.get_node_key_list()
-    #     return self.current_state.nodes[node_keys[index]]['data']
-
     def reset_board(self):
         self.current_state = self.__init_neighbor_cells(
             self.board_type, self.board_size, self.open_cell_positions)
@@ -232,7 +221,6 @@ class SimWorld:
             self.board_type, self.board_size)
 
     def pick_new_state(self, new_state):
-        # TODO Check if state is in child_states maybe for security
         for i, cell in enumerate(self.current_state):
             cell.status = new_state[i]
 
@@ -243,7 +231,6 @@ class SimWorld:
     def get_reward_and_state_status(self, child_states_length):
         pegs = self.get_remaining_pegs()
         if(pegs == 1):
-            # TODO experiment with different rewards
             return 100, StateStatus.SUCCESS_FINISH
 
         # If no child_states, then this is an end state
@@ -253,8 +240,6 @@ class SimWorld:
         return 0, StateStatus.IN_PROGRESS
 
     def get_remaining_pegs(self):
-        # Used if state is statuses:
-        # return self.current_state.count(1)
         statuses = self.get_current_state_statuses()
         return statuses.count(1)
 
