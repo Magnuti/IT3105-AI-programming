@@ -95,9 +95,6 @@ class CriticTable:
 
 
 class Actor:
-    # TODO "...the actor MAY consult the critic to get the values of all child states of s..."
-    # TODO should it ask everytime or only sometimes? Ask about this
-
     def __init__(self, learning_rate, discount_factor, eligibility_decay):
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
