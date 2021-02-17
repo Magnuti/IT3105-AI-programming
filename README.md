@@ -1,1 +1,1 @@
-# IT3105-AI-programming
+# Reinforcement Learning with the Actor-Critic Model

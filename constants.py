@@ -1,11 +1,9 @@
 from enum import Enum
 
-# TODO set all enum names to UPPER_CASE as specified by Python's naming convention
-
 
 class BoardType(Enum):
-    Triangle = "triangle"
-    Diamond = "diamond"
+    TRIANGLE = "triangle"
+    DIAMOND = "diamond"
 
 
 class CriticType(Enum):
@@ -25,3 +23,9 @@ class StateStatus(Enum):
     IN_PROGRESS = 0
     SUCCESS_FINISH = 1
     INCOMPLETE_FINISH = 2
+
+
+class EpsilonDecayFunction(Enum):
+    EXPONENTIAL = "exponential"
+    REVERSED_SIGMOID = "reversed_sigmoid"
+    LINEAR = "linear"
