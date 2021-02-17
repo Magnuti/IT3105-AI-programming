@@ -35,7 +35,7 @@ discount_factor_actor: 0.85
 epsilon: 1
 
 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
-# Not used for epsilon_decay_function: linear
+# Only used for epsilon_decay_function: exponential
 epsilon_decay: 0.99 
 
 # How epsilon should decay [exponential, reversed_sigmoid, linear]
