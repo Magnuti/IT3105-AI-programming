@@ -33,9 +33,9 @@ class SimWorld:
         self.current_state_status = StateStatus.IN_PROGRESS
 
     def __init_board(self, board_type, board_size):
-        if(board_type == BoardType.Triangle):
+        if(board_type == BoardType.TRIANGLE):
             self.graph = self.__init_triangle_board(board_size)
-        elif (board_type == BoardType.Diamond):
+        elif (board_type == BoardType.DIAMOND):
             self.graph = self.__init_diamond_board(board_size)
         else:
             raise NotImplementedError()
@@ -75,10 +75,10 @@ class SimWorld:
         return G
 
     def __init_neighbor_cells(self, board_type, board_size, open_cell_positions):
-        if (board_type == BoardType.Triangle):
+        if (board_type == BoardType.TRIANGLE):
             return self.__init_neighbor_cells_triangle(
                 board_size, open_cell_positions)
-        elif (board_type == BoardType.Diamond):
+        elif (board_type == BoardType.DIAMOND):
             return self.__init_cells_diamond(
                 board_size, open_cell_positions)
         else:
