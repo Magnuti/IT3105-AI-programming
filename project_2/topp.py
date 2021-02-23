@@ -1,0 +1,2 @@
+class TournamentOfProgressivePolicies:
+    raise NotImplementedError()

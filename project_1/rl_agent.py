@@ -47,7 +47,7 @@ class CriticFuncApp:
         # func_app.model(state) -> prediction. For init-NN this pred is random.
         TD_error_tensor = reward + self.discount_factor * \
             self.func_app.model(new_state) - self.func_app.model(state)
-        # extract number-value from tensor
+        # Extract number-value from tensor
         self.TD_error = TD_error_tensor.numpy()[0, 0]
 
     def fit_model(self, state):
@@ -237,7 +237,7 @@ class RL_agent:
 
                 SAP_list_in_current_episode.append((state, action))
 
-                # This SAP's elig = 1
+                # Update this SAP's eligibility
                 self.actor.set_SAP_eligibility((state, action))
 
                 self.critic.update_TD_error(state, new_state, reward)

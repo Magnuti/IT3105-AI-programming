@@ -1,0 +1,2 @@
+class MonteCarloTreeSearch:
+    raise NotImplementedError()

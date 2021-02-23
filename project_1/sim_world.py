@@ -29,6 +29,7 @@ class SimWorld:
             board_type, board_size, open_cell_positions)
         self.__init_board(board_type, board_size)
 
+        # We should check if init board has valid IN_PROGRESS status
         self.current_state_status = StateStatus.IN_PROGRESS
 
     def __init_board(self, board_type, board_size):
