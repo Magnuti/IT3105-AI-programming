@@ -1,0 +1,33 @@
+# Configuration parameters for the game of Hex
+
+# Recommended size in the interval [3, 10]
+board_size: 3
+
+episodes: 1
+
+# How many simulations (i.e., search games) to perform per each actual move, where
+# one simulation is a tree search followed by a rollout.
+simulations: 10
+
+### Parameters for the actor neural network (ANET) ###
+
+learning_rate: 0.01
+
+# List of neurons in each layer on the format [input, hidden, ..., hidden, output]
+neurons_per_layer: [10, 20, 20, 10]
+
+# Activation function for each layer (except the input layer)
+# Options [linear, sigmoid, tanh, relu]
+# For example a network with 2 hidden layers: [sigmoid, relu, relu]
+activation_functions: [relu, relu, linear]
+
+# [Adagrad, SGD, RMSProp, Adam]
+# SGD = Stochastic Gradient Descent
+optimizer: Adagrad
+
+# The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
+games_to_save: 5
+
+# The number of games to be played between any two ANET-based agents that
+# meet during the round-robin play of the TOPP.
+games_between_agents: 5
