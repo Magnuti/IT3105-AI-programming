@@ -1,7 +1,5 @@
 import numpy as np
 
-from constants import GameStatus
-
 
 class SimWorldNim:
     """
@@ -45,33 +43,33 @@ class SimWorldNim:
         self.remaining_pieces = next_state
         self.current_player = 1 - self.current_player  # Flip between 0 and 1
 
-    def get_game_status_and_reward(self):
+    def get_gameover_and_reward(self):
         if self.remaining_pieces > 0:
-            return GameStatus.IN_PROGRESS, 0
+            return False, 0
 
         # Player 0 wants to
         reward = 1 if self.current_player else -1
-        return GameStatus.FINISHED, reward
+        return True, reward
 
     def print_current_game_state(self):
         game_state = self.get_game_state()
         print("Current player:", game_state[0])
         print("Game state:", game_state[1:])
         print("Child states:", self.get_child_states())
-        game_status, reward = self.get_game_status_and_reward()
-        print("Game status", game_status.name)
+        gameover, reward = self.get_gameover_and_reward()
+        print("Gameover:", gameover)
         print("Reward:", reward)
         print("")
 
 
 if __name__ == "__main__":
     nim = SimWorldNim(10, 5)
-    game_status, reward = nim.get_game_status_and_reward()
-    while game_status == GameStatus.IN_PROGRESS:
+    gameover, reward = nim.get_gameover_and_reward()
+    while not gameover:
         nim.print_current_game_state()
         child_states = nim.get_child_states()
         move = np.random.choice(child_states)
         nim.pick_move(move)
-        game_status, reward = nim.get_game_status_and_reward()
+        gameover, reward = nim.get_gameover_and_reward()
 
     nim.print_current_game_state()
