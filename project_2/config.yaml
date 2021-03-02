@@ -4,9 +4,9 @@
 board_size: 3
 
 episodes: 1
-search_games_per_actual_move: 1
 
-# How many simulations to perform on each move.
+# How many simulations (i.e., search games) to perform per each actual move, where
+# one simulation is a tree search followed by a rollout.
 simulations: 10
 
 ### Parameters for the actor neural network (ANET) ###
