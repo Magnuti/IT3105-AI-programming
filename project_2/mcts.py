@@ -14,7 +14,6 @@ class MonteCarloTreeSearch:
         N_s = visit count for this state (node)
     tree_representation
         {'state': node}
-        nodes: a dict of all nodes in tree (hashed by state)
 
     '''
 
