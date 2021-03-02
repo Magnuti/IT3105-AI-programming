@@ -10,7 +10,6 @@ class Arguments:
 
         self.board_size = config_data["board_size"]
         self.episodes = config_data["episodes"]
-        self.search_games_per_actual_move = config_data["search_games_per_actual_move"]
         self.simulations = config_data["simulations"]
         self.learning_rate = config_data["learning_rate"]
         self.neurons_per_layer = config_data["neurons_per_layer"]
