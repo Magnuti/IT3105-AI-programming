@@ -24,7 +24,7 @@ class MonteCarloTreeSearch:
         # But this may not be true. In that case I would repr tree as [(set of states in tree), root_node]
         self.tree = {tuple(self.root['s']): self.root}
         self.c = c
-        self.simworld
+        self.simworld = simworld
 
     def simulate(self):
         self.tree_search()
@@ -35,7 +35,7 @@ class MonteCarloTreeSearch:
         while not self.simworld.gameOver():
             # TODO check exact simworld method
             # TODO: (?) need hashed_state to search for it in keys below
-            state = simworld.get_state()
+            state = self.simworld.get_state()
             # TODO CYT, but first check that it's not a bottleneck
             if state not in self.tree['nodes'].keys():
                 pass
