@@ -56,10 +56,8 @@ class MonteCarloTreeSearch:
     # using UCT algorithm
     def tree_search(self):
         previous_node = None
-        # TODO check exact simworld method
-        while not self.simworld.gameOver():
-            # TODO check exact simworld method
-            state = self.simworld.get_state()
+        while not self.simworld.get_gameover_and_reward()[0]:
+            state = self.simworld.get_game_state()
             hash_state = self.get_hashed_state(state)
 
             # TODO CYT, but first check that it's not a bottleneck
@@ -81,7 +79,6 @@ class MonteCarloTreeSearch:
         return previous_node
 
     def node_expand(self, parent_node):
-        # TODO: check implementation
         child_states = self.simworld.get_child_states(parent_node['s'])
         for i in range(len(child_states)):
             node = self.make_node(child_states[i], parent_node=parent_node)
@@ -116,7 +113,6 @@ class MonteCarloTreeSearch:
         return action_chosen
 
     def black_to_play(self, node):
-        # TODO check actual player_to_move representation, and make sure this repr is viable for both nim and hex
-        if node['s'][-1] == 0:
+        if node['s'][0] == 0:
             return True
         return False
