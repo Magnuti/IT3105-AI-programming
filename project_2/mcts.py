@@ -117,8 +117,6 @@ class MonteCarloTreeSearch:
             float: the value of the leaf node.
         """
 
-        saved_gamed_state = np.copy(leaf_node_state)
-
         gameover, reward = self.simworld.get_gameover_and_reward()
         while not gameover:
             # Batch size is 1 so we get the output by indexing [0]
@@ -150,8 +148,6 @@ class MonteCarloTreeSearch:
                 self.simworld.pick_move(child_states[move_index])
 
             gameover, reward = self.simworld.get_gameover_and_reward()
-
-        self.simworld.set_state_and_player(saved_gamed_state)
 
         return reward
 
