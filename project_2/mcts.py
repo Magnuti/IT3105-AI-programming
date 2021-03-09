@@ -1,5 +1,5 @@
 import numpy as np
-
+import random
 from function_approximator import ANET
 
 
@@ -49,7 +49,7 @@ class MonteCarloTreeSearch:
     def node_expand(self):
         ...
 
-    def leaf_eval(self, leaf_node_state):
+    def leaf_eval(self, leaf_node_state, epsilon):
         """
         Estimates the value of a leaf node by doing a rollout simulation using
         the default policy from the leaf node’s state to a final state.
@@ -61,6 +61,10 @@ class MonteCarloTreeSearch:
         Args:
             leaf_node_state: np.ndarray
                 The state of the board with the first two indices being player bits.
+            epsilon: float
+                Select the best action with a probability of 1-epsilon, and a random
+                action with probability epsilon. The random action will have
+                probability > 0, since we cannot pick illegal actions.
         Returns:
             float: the value of the leaf node.
         """
@@ -83,9 +87,20 @@ class MonteCarloTreeSearch:
             # Normalize the new probabilities
             output_propabilities /= sum(output_propabilities)
 
-            # TODO select action based on e-greedy strategy as well
-            move_index = np.argmax(output_propabilities)
-            self.simworld.pick_move(child_states[move_index])
+            if random.random() < epsilon:
+                # Make random choice (including the best action)
+                legal_child_states = []
+                for state in child_states:
+                    if state is not None:
+                        legal_child_states.append(state)
+
+                choice = random.choice(legal_child_states)
+                self.simworld.pick_move(choice)
+            else:
+                # Make greedy choice
+                move_index = np.argmax(output_propabilities)
+                self.simworld.pick_move(child_states[move_index])
+
             gameover, reward = self.simworld.get_gameover_and_reward()
 
         self.simworld.set_state_and_player(saved_gamed_state)

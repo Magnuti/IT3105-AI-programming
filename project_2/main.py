@@ -10,7 +10,7 @@ if __name__ == "__main__":
     if args.game_type == GameType.NIM:
         sim_world = SimWorldNim(args.nim_N, args.nim_K)
         mcts = MonteCarloTreeSearch(None, None, sim_world, args)
-        reward = mcts.leaf_eval(sim_world.get_game_state())
+        reward = mcts.leaf_eval(sim_world.get_game_state(), 0.7)
         print(reward)
     elif args.game_type == GameType.HEX:
         raise NotImplementedError()
