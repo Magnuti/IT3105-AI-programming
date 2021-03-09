@@ -1,3 +1,6 @@
+import numpy as np
+import random
+from function_approximator import ANET
 import math
 
 
@@ -19,8 +22,7 @@ class MonteCarloTreeSearch:
 
     '''
 
-    # TODO sync up the class-init call from main or wherever
-    def __init__(self, root_state, c, simworld, simulations):
+    def __init__(self, root_state, c, simworld, args):
         '''
         args:
             simworld:  actual_simworld, which state is reset at end of search_next_actual_move()
@@ -36,7 +38,8 @@ class MonteCarloTreeSearch:
         self.tree = {self.get_hashed_state(root_state): self.root}
         self.c = c
         self.simworld = simworld
-        self.simulations = simulations
+        self.simulations = args.simulations
+        self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
 
     def search_next_actual_move(self):
         for s in range(self.simulations):
@@ -100,8 +103,59 @@ class MonteCarloTreeSearch:
             # attach child to tree
             self.tree[self.get_hashed_state(node['s'])] = node
 
-    def leaf_eval(self):
-        ...
+    def leaf_eval(self, leaf_node_state, epsilon):
+        """
+        Estimates the value of a leaf node by doing a rollout simulation using
+        the default policy from the leaf node’s state to a final state.
+
+        If we use rollout this value is the reward that is given when the
+        simulated game is finished (e.g., -1 or 1). If we are using a critic,
+        however, this value is an evaluation value (e.g. 0.547).
+
+        Args:
+            leaf_node_state: np.ndarray
+                The state of the board with the first two indices being player bits.
+            epsilon: float
+                Select the best action with a probability of 1-epsilon, and a random
+                action with probability epsilon. The random action will have
+                probability > 0, since we cannot pick illegal actions.
+        Returns:
+            float: the value of the leaf node.
+        """
+
+        gameover, reward = self.simworld.get_gameover_and_reward()
+        while not gameover:
+            # Batch size is 1 so we get the output by indexing [0]
+            output_propabilities = self.ANET.forward(
+                leaf_node_state).numpy()[0]
+
+            child_states = self.simworld.get_child_states()
+
+            # Set illegal actions to 0 probability
+            for i, state in enumerate(child_states):
+                if state is None:
+                    output_propabilities[i] = 0.0
+
+            # Normalize the new probabilities
+            output_propabilities /= sum(output_propabilities)
+
+            if random.random() < epsilon:
+                # Make random choice (including the best action)
+                legal_child_states = []
+                for state in child_states:
+                    if state is not None:
+                        legal_child_states.append(state)
+
+                choice = random.choice(legal_child_states)
+                self.simworld.pick_move(choice)
+            else:
+                # Make greedy choice
+                move_index = np.argmax(output_propabilities)
+                self.simworld.pick_move(child_states[move_index])
+
+            gameover, reward = self.simworld.get_gameover_and_reward()
+
+        return reward
 
     def backprop(self, leaf_node, z):
         def climb_and_update(node, node_child):

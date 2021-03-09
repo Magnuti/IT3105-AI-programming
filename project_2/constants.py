@@ -1,6 +1,11 @@
 from enum import Enum
 
 
+class GameType(Enum):
+    NIM = "nim"
+    HEX = "hex"
+
+
 class ActivationFunction(Enum):
     LINEAR = "linear"
     SIGMOID = "sigmoid"

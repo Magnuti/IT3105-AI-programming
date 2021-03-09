@@ -1,7 +1,21 @@
-# Configuration parameters for the game of Hex
+# The type of game to be played [nim, hex]
+game_type: nim
+
+### Nim variables ###
+
+# The number of pieces on the board
+nim_N: 10
+# The maximum number that a player can take off the board on their turn.
+nim_K: 5
+
+### Nim variables end ###
+
+### Hex variables ###
 
 # Recommended size in the interval [3, 10]
 board_size: 3
+
+### Hex variables end ###
 
 episodes: 1
 
@@ -13,8 +27,10 @@ simulations: 10
 
 learning_rate: 0.01
 
-# List of neurons in each layer on the format [input, hidden, ..., hidden, output]
-neurons_per_layer: [10, 20, 20, 10]
+# List of neurons in each hidden layer. Set to an empty list if no hidden
+# layers should be used. The input/output dimensions are automatically
+# calculated based on board_size.
+neurons_per_hidden_layer: [20, 20]
 
 # Activation function for each layer (except the input layer)
 # Options [linear, sigmoid, tanh, relu]
