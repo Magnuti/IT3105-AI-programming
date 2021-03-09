@@ -86,14 +86,20 @@ class MonteCarloTreeSearch:
 
     def node_expand(self, parent_node):
         child_states = self.simworld.get_child_states(parent_node['s'])
+        skipped_moves = 0
         for i in range(len(child_states)):
+            if not child_states[i]:
+                # if it's an illegal move
+                skipped_moves += 1
+                continue
             node = self.make_node(child_states[i], parent_node=parent_node)
             # attach child to it's parent
             node['p']['c'].append(node)
-            # init N(s,a), Q(s,a), E(s,a) counters on parent, for action i
-            node['N_a'][i] = 0
-            node['Q_a'][i] = 0
-            node['E_a'][i] = 0
+            # init N(s,a), Q(s,a), E(s,a) counters on parent, for this action
+            actual_action_index = i-skipped_moves
+            node['N_a'][actual_action_index] = 0
+            node['Q_a'][actual_action_index] = 0
+            node['E_a'][actual_action_index] = 0
             # attach child to tree
             self.tree[self.get_hashed_state(node['s'])] = node
 
