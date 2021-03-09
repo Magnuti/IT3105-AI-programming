@@ -3,15 +3,17 @@ import math
 
 class MonteCarloTreeSearch:
     '''
+    # TODO: don't know if float is the optimal var-type for the Q and E value (in terms of num decimals)
     node_representation:
-        {s: state, c: [node], p: node|None, Q: {
-            a: int}, N_a: {a: int}, N_s: int}
+        {s: state, c: [node], p: node|None, Q_a: {
+            a: float}, N_a: {a: int}, N_s: int, E_a: {a: float}}
         s = state
         c = children
         p = parent node
-        Q{a: int} = monte-carlo value for action a
-        N_a{a: int} = visit count for action a
+        Q_a = monte-carlo value for action a (outgoing)
+        N_a = visit count for action a (outgoing)
         N_s = visit count for this state (node)
+        E_a = sum of all final-state rewards this SAP has been involved in (so far) (outgoing)
     tree_representation
         {'state': node}
 
@@ -25,7 +27,7 @@ class MonteCarloTreeSearch:
 
         # TODO CYT
         self.root = {'s': root_state, 'c': [],
-                     'p': None, 'Q': {}, 'N_a': {}, 'N_s': 0}
+                     'p': None, 'Q_a': {}, 'N_a': {}, 'N_s': 0, 'E_a': {}}
         # TODO from Jonas: I use a dict of nodes as tree-repr instead of a set of state-hashes,
         # because I assume it will be handy to be able to quickly get a node given it's state.
         # We do lookup in hash_state in tree_search.while_loop.. which seems beneficial!
@@ -84,17 +86,34 @@ class MonteCarloTreeSearch:
             node = self.make_node(child_states[i], parent_node=parent_node)
             # attach child to it's parent
             node['p']['c'].append(node)
+            # init N(s,a), Q(s,a), E(s,a) counters on parent, for action i
+            node['N_a'][i] = 0
+            node['Q_a'][i] = 0
+            node['E_a'][i] = 0
             # attach child to tree
             self.tree[self.get_hashed_state(node['s'])] = node
 
     def leaf_eval(self):
         ...
 
-    def backprop(self):
-        ...
+    def backprop(self, leaf_node, z):
+        def climb_and_update(node, node_child):
+            # Upd N(s)
+            node['N_s'] += 1
+            # which action/child we climbed up from <int>
+            a = node['c'].index(node_child)
+            # Upd N(s,a), E, Q(s, a)
+            node['N_a'][a] += 1
+            node['E_a'][a] += z
+            node['Q_a'][a] = node['E_a'][a] / node['N_a'][a]
+
+            if node['p']:
+                climb_and_update(node['p'], node)
+        if leaf_node['p']:
+            climb_and_update(leaf_node['p'], leaf_node)
 
     def make_node(self, state, parent_node):
-        return {'s': state, 'p': parent_node, 'c': [], 'Q': {}, 'N_a': {}, 'N_s': 0}
+        return {'s': state, 'p': parent_node, 'c': [], 'Q_a': {}, 'N_a': {}, 'N_s': 0, 'E_a': {}}
 
     def get_hashed_state(self, state):
         return tuple(state)
@@ -102,13 +121,14 @@ class MonteCarloTreeSearch:
     # TODO: be ready to explain this on demo!
     def tree_select_move(self, node, num_child_states):
         if self.black_to_play(node):
+            # Get the greedy best-action coice for player 1
             # the math here would be better to do in np, but need to be explicit to be able to cythonize
-            values = [(node['Q'][a] + self.c*math.sqrt(math.log(node['N_s']
-                                                                ) / node['N_a'][a])) for a in range(num_child_states)]
+            values = [(node['Q_a'][a] + self.c*math.sqrt(math.log(node['N_s']
+                                                                  ) / node['N_a'][a])) for a in range(num_child_states)]
             action_chosen = values.index(max(values))
         else:
-            values = [(node['Q'][a] - self.c*math.sqrt(math.log(node['N_s']
-                                                                ) / node['N_a'][a])) for a in range(num_child_states)]
+            values = [(node['Q_a'][a] - self.c*math.sqrt(math.log(node['N_s']
+                                                                  ) / node['N_a'][a])) for a in range(num_child_states)]
             action_chosen = values.index(min(values))
         return action_chosen
 
