@@ -55,6 +55,7 @@ class SimWorldNim:
 
     def pick_move(self, next_state):
         self.state = next_state[2:]
+        # TODO: might be buggy, in that case get current player from next_state arg
         self.current_player = 1 - self.current_player  # Flip between 0 and 1
 
     def set_state_and_player(self, state):

@@ -1,6 +1,5 @@
 import numpy as np
 import random
-from function_approximator import ANET
 import math
 
 
@@ -22,7 +21,7 @@ class MonteCarloTreeSearch:
 
     '''
 
-    def __init__(self, root_state, c, simworld, args):
+    def __init__(self, root_state, c, simworld, ANET, args):
         '''
         args:
             simworld:  actual_simworld, which state is reset at end of search_next_actual_move()
@@ -39,9 +38,11 @@ class MonteCarloTreeSearch:
         self.c = c
         self.simworld = simworld
         self.simulations = args.simulations
-        self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
+        self.ANET = ANET
 
     def search_next_actual_move(self):
+        self.root = self.make_node(self.simworld.get_game_state(), None)
+        # TODO prune tree according to new root
         for s in range(self.simulations):
             self.simulate()
         # reset simworld to the root_state (actual_state before search)
@@ -55,7 +56,9 @@ class MonteCarloTreeSearch:
     def simulate(self):
         self.simworld.pick_move(self.root['s'])
         leaf_node = self.tree_search()
+        self.simworld.pick_move(leaf_node['s'])
         # TODO: no copy of simworld is needed in leaf_eval, since we reset the state on top of this func
+        # TODO: make leaf-eval take in the simworld - AND use it correctly
         # z = leaf-eval(self.simworld)
         # backprop (start from leaf and climb to top)
 
@@ -77,7 +80,7 @@ class MonteCarloTreeSearch:
                 return node
 
             a = self.tree_select_move(node, len(node['c']))
-            self.simworld.pick_move(node['c'][a])
+            self.simworld.pick_move(node['c'][a]['s'])
             previous_node = node
 
         # Do one last evaluation (rollout/critic) of the parent of the game_over_state,
@@ -85,7 +88,8 @@ class MonteCarloTreeSearch:
         return previous_node
 
     def node_expand(self, parent_node):
-        child_states = self.simworld.get_child_states(parent_node['s'])
+        self.simworld.pick_move(parent_node['s'])
+        child_states = self.simworld.get_child_states()
         skipped_moves = 0
         for i in range(len(child_states)):
             if not child_states[i]:

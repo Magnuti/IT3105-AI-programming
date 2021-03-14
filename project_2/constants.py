@@ -18,3 +18,9 @@ class Optimizer(Enum):
     SGD = "SGD"
     RMSProp = "RMSProp"
     ADAM = "Adam"
+
+
+class EpsilonDecayFunction(Enum):
+    EXPONENTIAL = "exponential"
+    REVERSED_SIGMOID = "reversed_sigmoid"
+    LINEAR = "linear"
