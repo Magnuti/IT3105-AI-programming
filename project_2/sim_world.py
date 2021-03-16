@@ -288,20 +288,15 @@ class SimWorldHex(SimWorldInterface):
 
         return child_states
 
-    def pick_move(self, next_state):
-        for i in range(0, len(next_state[2:]), 2):
-            if not np.array_equal(next_state[2+i:4+i], self.state[i: 2+i]):
-                cell_index = i // 2
-                break
-
+    def update_neighbor_sets(self, modified_cell_index):
         # This holds a list of all sets we want to combine since they share
         # a common cell.
-        to_merge = [{cell_index}]
+        to_merge = [{modified_cell_index}]
         self.neighbor_sets[self.current_player].append(to_merge[0])
-        for neighbour_index in self.neighbor_indices_list[cell_index]:
+        for neighbour_index in self.neighbor_indices_list[modified_cell_index]:
             for neighbor_set in self.neighbor_sets[self.current_player]:
                 if neighbour_index in neighbor_set:
-                    neighbor_set.add(cell_index)
+                    neighbor_set.add(modified_cell_index)
                     to_merge.append(neighbor_set)
 
         new_set = set()
@@ -315,8 +310,6 @@ class SimWorldHex(SimWorldInterface):
                 self.neighbor_sets[self.current_player].remove(neighbor_set)
 
         self.neighbor_sets[self.current_player].append(new_set)
-
-        super().pick_move(next_state)
 
     def get_gameover_and_reward(self):
         if self.current_player:
@@ -373,8 +366,14 @@ if __name__ == "__main__":
             if child_states[i] is not None:
                 legal_child_states.append(child_states[i])
 
-        move_index = np.random.randint(0, len(legal_child_states))
-        sim_world.pick_move(legal_child_states[move_index])
+        legal_action_index = np.random.randint(0, len(legal_child_states))
+        next_state = legal_child_states[legal_action_index]
+        for i, state in enumerate(child_states):
+            if np.array_equal(next_state, state):
+                action_index = i
+
+        sim_world.update_neighbor_sets(action_index)
+        sim_world.pick_move(next_state)
         gameover, reward = sim_world.get_gameover_and_reward()
 
     # sim_world.print_current_game_state()
