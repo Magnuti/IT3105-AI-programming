@@ -27,11 +27,7 @@ class RL_agent:
         self.actor = Actor(self.sim_world, args)
 
     def play(self):
-        # Previous state-action-pairs in this episode
-        # TODO: needed?
-        # SAP_list_in_current_episode = []
-        # TODO: needed?
-        # remaining_pegs_list = []
+        # TODO Think it's helpful to just plot this to see how it's manifesting
         epsilon_history = []
 
         for episode in range(self.args.episodes):
@@ -81,23 +77,18 @@ class RL_agent:
                 # TODO should reward be fetched here too?
                 gameover, reward = self.sim_world.get_gameover_and_reward()
 
-                # visualize current episode if it's in visualize_training_episodes or last episode
-                if (self.args.visualize and (episode in self.args.visualize_training_episodes or episode == self.args.episodes - 1)):
-                    # TODO
-                    # visualize_board(self.sim_world.graph, new_state_with_visualization, episode=episode)
-                    # time.sleep(self.args.frame_time)
-                    pass
+                # # visualize current episode if it's in visualize_training_episodes or last episode
+                # if (self.args.visualize and (episode in self.args.visualize_training_episodes or episode == self.args.episodes - 1)):
+                #     # TODO
+                #     # visualize_board(self.sim_world.graph, new_state_with_visualization, episode=episode)
+                #     # time.sleep(self.args.frame_time)
+                #     pass
 
             epsilon_history.append(self.epsilon)
 
             if episode < self.args.episodes - 1:
                 self.sim_world.reset_game()
                 self.actor.train_ANET()
-
-        if (self.args.visualize):
-            # TODO
-            # plot_performance(remaining_pegs_list, epsilon_history)
-            pass
 
 
 class Actor:
@@ -115,7 +106,7 @@ class Actor:
 
     # assuming that the current state is already picked in simworld
     def pick_next_actual_action(self, epsilon):
-        # TODO is it right that the actor only consults the MCTS for next actual move
+        # TODO is it right that the actor only consults the MCTS for next actual move?
         next_state, train_case = self.MCTS.search_next_actual_move(epsilon)
         self.replay_buffer.append(train_case)
         self.sim_world.pick_move(next_state)
@@ -134,5 +125,5 @@ class Actor:
         history = self.ANET.fit(x, y, batch_size=None, epochs=self.args.epochs)
 
         if plot:
-            # TODO plot training graph, but atm there is no validation set
+            # TODO plot training graph (?), but atm there is no validation set
             pass
