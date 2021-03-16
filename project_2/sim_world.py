@@ -253,10 +253,15 @@ class SimWorldHex(SimWorldInterface):
 
     def get_child_states(self):
         """
-        Returns a list of size baord_size of all possible states where the child states are not None
-            For example, [[some state], [some state], None, None] where None means that the action
-            is not legal. We need to pass down None values because we need to scale these illegal
-            action's probabilities down to 0.
+        Returns a list of size board_size ** 2 + 2 of all possible states where
+            the child states are not None. The first two elements represent the
+            player ID, while the next element pairs represent cell values.
+            For example, [[100010], [101000], None, None] where None
+            means that the action is not legal. We need to pass down None
+            values because we need to scale these illegal action's
+            probabilities down to 0.
+            We see that we can place the value 10 in two locations: [2:4] and
+            [4:6], since the current player is 10
         """
         child_states = []
         player_cells = np.array(
@@ -264,6 +269,8 @@ class SimWorldHex(SimWorldInterface):
         for i in range(0, len(self.state), 2):
             if np.array_equal(self.state[i: i + 2], np.array([0, 0], dtype=int)):
                 # Empty cell
+                # The format is [current_player_id...current_player_id...]
+                # where we set current_player_id to some board cell.
                 child_state = np.empty(2 + len(self.state), dtype=int)
                 child_state[:2] = player_cells
                 child_state[2:] = self.state
@@ -287,6 +294,8 @@ class SimWorldHex(SimWorldInterface):
                 cell_index = i // 2
                 break
 
+        # This holds a list of all sets we want to combine since they share
+        # a common cell.
         to_merge = [{cell_index}]
         self.neighbor_sets[self.current_player].append(to_merge[0])
         for neighbour_index in self.neighbor_indices_list[cell_index]:
