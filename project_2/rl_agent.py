@@ -5,6 +5,7 @@ from constants import EpsilonDecayFunction
 # TODO
 # from visualization import visualize_board, plot_performance
 import time
+import random
 
 
 class RL_agent:
@@ -60,6 +61,8 @@ class RL_agent:
             # self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
             # self.child_states = self.sim_world.get_child_states()
 
+            # ! TODO Reset MCTS tree for the new actual-game-episode
+
             # First action
             # TODO epsilon handled correctly in actor?
             self.actor.pick_next_actual_action(self.epsilon)
@@ -91,6 +94,7 @@ class RL_agent:
             # Assuming all boards look the same for now
             if episode < self.args.episodes - 1:
                 self.sim_world.reset_game()
+                self.actor.train_ANET()
 
         if (self.args.visualize):
             # TODO
@@ -108,9 +112,29 @@ class Actor:
         temp_c = 0.7
         self.MCTS = MonteCarloTreeSearch(
             root_state=sim_world.get_game_state(), c=temp_c, simworld=sim_world, ANET=self.ANET, args=args)
+        self.replay_buffer = []
+        self.args = args
 
     # assuming that the current state is already picked in simworld
     def pick_next_actual_action(self, epsilon):
         # TODO is it right that the actor only consults the MCTS for next actual move
-        next_state = self.MCTS.search_next_actual_move()
+        next_state, train_case = self.MCTS.search_next_actual_move(epsilon)
+        self.replay_buffer.append(train_case)
         self.sim_world.pick_move(next_state)
+
+    def train_ANET(self, plot=False):
+        batch = random.choices(self.replay_buffer, k=self.args.mini_batch_size)
+        x = []
+        y = []
+        for c in batch:
+            x.append(c[0])
+            y.append(c[1])
+
+        x = np.array(x)
+        y = np.array(y)
+        # batch_size None, since we are already serving only 1 mini-batch
+        history = self.ANET.fit(x, y, batch_size=None, epochs=self.args.epochs)
+
+        if plot:
+            # TODO plot training graph, but atm there is no validation set
+            pass

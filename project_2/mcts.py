@@ -40,27 +40,31 @@ class MonteCarloTreeSearch:
         self.simulations = args.simulations
         self.ANET = ANET
 
-    def search_next_actual_move(self):
+    def search_next_actual_move(self, epsilon):
         self.root = self.make_node(self.simworld.get_game_state(), None)
         # TODO prune tree according to new root
         for s in range(self.simulations):
-            self.simulate()
+            self.simulate(epsilon)
         # reset simworld to the root_state (actual_state before search)
         self.simworld.pick_move(self.root['s'])
 
         # based on all the sims, choose recommended actual_move
         children = self.root['c']
         move_num = self.tree_select_move(self.root, len(children))
-        return children[move_num]
 
-    def simulate(self):
+        # Make training case for root_node
+        target_dist = np.array([self.root['N_a'][a]
+                                for a in range(len(children))])
+        target_norm = np.sum(target_dist)
+        target_dist /= target_norm
+        return children[move_num]['s'], [self.root['s'], target_dist]
+
+    def simulate(self, epsilon):
         self.simworld.pick_move(self.root['s'])
         leaf_node = self.tree_search()
         self.simworld.pick_move(leaf_node['s'])
-        # TODO: no copy of simworld is needed in leaf_eval, since we reset the state on top of this func
-        # TODO: make leaf-eval take in the simworld - AND use it correctly
-        # z = leaf-eval(self.simworld)
-        # backprop (start from leaf and climb to top)
+        z = self.leaf_eval(epsilon)
+        self.backprop(leaf_node, z)
 
     # using UCT algorithm
     def tree_search(self):
@@ -87,27 +91,7 @@ class MonteCarloTreeSearch:
         # this way we may discover a better move than tree_policy chose
         return previous_node
 
-    def node_expand(self, parent_node):
-        self.simworld.pick_move(parent_node['s'])
-        child_states = self.simworld.get_child_states()
-        skipped_moves = 0
-        for i in range(len(child_states)):
-            if not child_states[i]:
-                # if it's an illegal move
-                skipped_moves += 1
-                continue
-            node = self.make_node(child_states[i], parent_node=parent_node)
-            # attach child to it's parent
-            node['p']['c'].append(node)
-            # init N(s,a), Q(s,a), E(s,a) counters on parent, for this action
-            actual_action_index = i-skipped_moves
-            node['N_a'][actual_action_index] = 0
-            node['Q_a'][actual_action_index] = 0
-            node['E_a'][actual_action_index] = 0
-            # attach child to tree
-            self.tree[self.get_hashed_state(node['s'])] = node
-
-    def leaf_eval(self, leaf_node_state, epsilon):
+    def leaf_eval(self, epsilon):
         """
         Estimates the value of a leaf node by doing a rollout simulation using
         the default policy from the leaf node’s state to a final state.
@@ -117,8 +101,6 @@ class MonteCarloTreeSearch:
         however, this value is an evaluation value (e.g. 0.547).
 
         Args:
-            leaf_node_state: np.ndarray
-                The state of the board with the first two indices being player bits.
             epsilon: float
                 Select the best action with a probability of 1-epsilon, and a random
                 action with probability epsilon. The random action will have
@@ -131,7 +113,7 @@ class MonteCarloTreeSearch:
         while not gameover:
             # Batch size is 1 so we get the output by indexing [0]
             output_propabilities = self.ANET.forward(
-                leaf_node_state).numpy()[0]
+                self.simworld.get_game_state()).numpy()[0]
 
             child_states = self.simworld.get_child_states()
 
@@ -168,6 +150,7 @@ class MonteCarloTreeSearch:
             # which action/child we climbed up from <int>
             a = node['c'].index(node_child)
             # Upd N(s,a), E, Q(s, a)
+            # TODO get a comment describing E.. (it was taken from Keith's slides)
             node['N_a'][a] += 1
             node['E_a'][a] += z
             node['Q_a'][a] = node['E_a'][a] / node['N_a'][a]
@@ -201,3 +184,23 @@ class MonteCarloTreeSearch:
         if node['s'][0] == 0:
             return True
         return False
+
+    def node_expand(self, parent_node):
+        self.simworld.pick_move(parent_node['s'])
+        child_states = self.simworld.get_child_states()
+        skipped_moves = 0
+        for i in range(len(child_states)):
+            if not child_states[i]:
+                # if it's an illegal move
+                skipped_moves += 1
+                continue
+            node = self.make_node(child_states[i], parent_node=parent_node)
+            # attach child to it's parent
+            node['p']['c'].append(node)
+            # init N(s,a), Q(s,a), E(s,a) counters on parent, for this action
+            actual_action_index = i-skipped_moves
+            node['N_a'][actual_action_index] = 0
+            node['Q_a'][actual_action_index] = 0
+            node['E_a'][actual_action_index] = 0
+            # attach child to tree
+            self.tree[self.get_hashed_state(node['s'])] = node

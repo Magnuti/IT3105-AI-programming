@@ -36,6 +36,8 @@ class Arguments:
             self.activation_functions.append(ActivationFunction(af))
 
         self.optimizer = Optimizer(config_data["optimizer"])
+        self.mini_batch_size = config_data["mini_batch_size"]
+        self.epochs = config_data["epochs"]
         self.games_to_save = config_data["games_to_save"]
         self.games_between_agents = config_data["games_between_agents"]
 
