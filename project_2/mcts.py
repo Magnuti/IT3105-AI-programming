@@ -69,6 +69,7 @@ class MonteCarloTreeSearch:
     # using UCT algorithm
     def tree_search(self):
         previous_node = None
+        # TODO, Jonas: not sure if we actually need to check for gameover here.. would save some computation if we could drop it
         while not self.simworld.get_gameover_and_reward()[0]:
             state = self.simworld.get_game_state()
             hash_state = self.get_hashed_state(state)
