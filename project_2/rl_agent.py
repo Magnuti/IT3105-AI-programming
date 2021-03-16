@@ -77,7 +77,6 @@ class RL_agent:
                 # TODO don't think we need child states here, but the visualization part should be implemented somewhere in the code
                 # self.child_states, self.successor_states_with_visualization = self.sim_world.get_child_states()
 
-                # TODO epsilon handled correctly in actor?
                 self.actor.pick_next_actual_action(self.epsilon)
                 # TODO should reward be fetched here too?
                 gameover, reward = self.sim_world.get_gameover_and_reward()
@@ -91,7 +90,6 @@ class RL_agent:
 
             epsilon_history.append(self.epsilon)
 
-            # Assuming all boards look the same for now
             if episode < self.args.episodes - 1:
                 self.sim_world.reset_game()
                 self.actor.train_ANET()

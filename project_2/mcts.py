@@ -91,6 +91,25 @@ class MonteCarloTreeSearch:
         # this way we may discover a better move than tree_policy chose
         return previous_node
 
+    def node_expand(self, parent_node):
+        self.simworld.pick_move(parent_node['s'])
+        child_states = self.simworld.get_child_states()
+        for i in range(len(child_states)):
+            if not child_states[i]:
+                # if it's an illegal move
+                node = None
+            else:
+                node = self.make_node(child_states[i], parent_node=parent_node)
+                # attach child to searchable tree
+                self.tree[self.get_hashed_state(node['s'])] = node
+            # attach child to it's parent
+            parent_node['c'].append(node)
+            # init N(s,a), Q(s,a), E(s,a) counters on parent, for this action (even illegals)
+            # TODO: for illegals, we could skip init_counter for Q_a and E_a, since these are not used anywhere
+            parent_node['N_a'][i] = 0
+            parent_node['Q_a'][i] = 0
+            parent_node['E_a'][i] = 0
+
     def leaf_eval(self, epsilon):
         """
         Estimates the value of a leaf node by doing a rollout simulation using
@@ -168,15 +187,27 @@ class MonteCarloTreeSearch:
 
     # TODO: be ready to explain this on demo!
     def tree_select_move(self, node, num_child_states):
+        node_N_s = node['N_s']
         if self.black_to_play(node):
             # Get the greedy best-action coice for player 1
             # the math here would be better to do in np, but need to be explicit to be able to cythonize
-            values = [(node['Q_a'][a] + self.c*math.sqrt(math.log(node['N_s']
-                                                                  ) / node['N_a'][a])) for a in range(num_child_states)]
+            values = []
+            for a in range(num_child_states):
+                if not node['c'][a]:
+                    values.append(-math.inf)
+                    continue
+                values.append(node['Q_a'][a] + self.c *
+                              math.sqrt(math.log(node_N_s) / node['N_a'][a]))
             action_chosen = values.index(max(values))
         else:
-            values = [(node['Q_a'][a] - self.c*math.sqrt(math.log(node['N_s']
-                                                                  ) / node['N_a'][a])) for a in range(num_child_states)]
+            # get best-action for player 0
+            values = []
+            for a in range(num_child_states):
+                if not node['c'][a]:
+                    values.append(math.inf)
+                    continue
+                values.append(node['Q_a'][a] - self.c *
+                              math.sqrt(math.log(node_N_s) / node['N_a'][a]))
             action_chosen = values.index(min(values))
         return action_chosen
 
@@ -184,23 +215,3 @@ class MonteCarloTreeSearch:
         if node['s'][0] == 0:
             return True
         return False
-
-    def node_expand(self, parent_node):
-        self.simworld.pick_move(parent_node['s'])
-        child_states = self.simworld.get_child_states()
-        skipped_moves = 0
-        for i in range(len(child_states)):
-            if not child_states[i]:
-                # if it's an illegal move
-                skipped_moves += 1
-                continue
-            node = self.make_node(child_states[i], parent_node=parent_node)
-            # attach child to it's parent
-            node['p']['c'].append(node)
-            # init N(s,a), Q(s,a), E(s,a) counters on parent, for this action
-            actual_action_index = i-skipped_moves
-            node['N_a'][actual_action_index] = 0
-            node['Q_a'][actual_action_index] = 0
-            node['E_a'][actual_action_index] = 0
-            # attach child to tree
-            self.tree[self.get_hashed_state(node['s'])] = node
