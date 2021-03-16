@@ -7,6 +7,10 @@ from constants import BoardCell
 """
 Player 1 = [0, 1], player 0 = [1, 0]
 Player 1 wants to maximize the reward, while player 0 wants to minimize.
+
+The project specification uses player 1 and 2, so we just increment them.
+
+For the Hex game, player 0 is red, while player 1 is black
 """
 
 
@@ -366,9 +370,9 @@ if __name__ == "__main__":
 
     # sim_world.print_current_game_state()
     if reward == 1:
-        print("Player 1 (black) wins")
+        print("Black (player 1, player 2 in project spec) wins")
     else:
-        print("Player 0 (red) wins")
+        print("Red (player 0, player 1 in project spec) wins")
 
     sim_world.update_graph_statuses()
     visualize_board(sim_world.graph, list(
