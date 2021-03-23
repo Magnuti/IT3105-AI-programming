@@ -24,7 +24,8 @@ class MonteCarloTreeSearch:
         self.ANET = ANET
         net_layers_len = len(ANET.layers)
         net_out_layer = ANET.layers[net_layers_len - 1]
-        out_dim = net_out_layer[len(net_out_layer) - 1]
+        out_dim = net_out_layer.output_shape[len(
+            net_out_layer.output_shape) - 1]
         self.num_childstates = out_dim
         self.root = self.make_node(root_state, None)
         self.tree = {self.get_hashed_state(root_state): self.root}
