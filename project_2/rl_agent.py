@@ -97,10 +97,10 @@ class Actor:
         self.sim_world = sim_world
         # TODO pass in learning rate to ANET ?
         self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
-        # TODO we need to pass in c, which should probably be decaying
-        temp_c = 0.7
+        # TODO we need to pass in explore_constant, which should probably be decaying
+        temp_explore_constant = 0.7
         self.MCTS = MonteCarloTreeSearch(
-            root_state=sim_world.get_game_state(), c=temp_c, simworld=sim_world, ANET=self.ANET, args=args)
+            root_state=sim_world.get_game_state(), explore_constant=temp_explore_constant, simworld=sim_world, ANET=self.ANET, args=args)
         self.replay_buffer = []
         self.args = args
 
