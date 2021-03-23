@@ -41,6 +41,16 @@ activation_functions: [relu, relu, linear]
 # SGD = Stochastic Gradient Descent
 optimizer: Adagrad
 
+# How many random cases from replay buffer to train on, per episode
+replay_buffer_selection_size: 100
+
+# The batch size the neural network should train on. The random selection
+# from the replay buffer is divided into these mini-batches.
+# Should be <= replay_buffer_selection_size
+mini_batch_size: 25
+
+epochs: 10
+
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
 games_to_save: 5
 
