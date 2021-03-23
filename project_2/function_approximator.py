@@ -36,9 +36,9 @@ class ANET:
         features = features.reshape((1, features.shape[0]))
         return self.model(features)
 
-    def fit(self, x, y, batch_size, epochs):
+    def fit(self, x, y, batch_size, epochs, verbose=0):
         return self.model.fit(
-            x, y, batch_size=batch_size, epochs=epochs, verbose=1)
+            x, y, batch_size=batch_size, epochs=epochs, verbose=verbose)
 
 
 if __name__ == "__main__":
