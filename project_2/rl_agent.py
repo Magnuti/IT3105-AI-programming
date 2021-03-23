@@ -112,7 +112,10 @@ class Actor:
         self.sim_world.pick_move(next_state)
 
     def train_ANET(self, plot=False):
-        batch = random.choices(self.replay_buffer, k=self.args.mini_batch_size)
+        batch_size = self.args.mini_batch_size
+        if len(self.replay_buffer) < batch_size:
+            batch_size = len(self.replay_buffer)
+        batch = random.choices(self.replay_buffer, k=batch_size)
         x = []
         y = []
         for c in batch:
