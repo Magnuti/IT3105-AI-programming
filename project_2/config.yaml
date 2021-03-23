@@ -42,7 +42,6 @@ activation_functions: [relu, relu, linear]
 optimizer: Adagrad
 
 # How many random cases from replay buffer to train on, per episode
-# NB: this must be lower than minimum moves for a given board_size
 mini_batch_size: 25
 epochs: 10
 
