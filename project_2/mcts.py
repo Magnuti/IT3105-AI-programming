@@ -24,11 +24,15 @@ class MonteCarloTreeSearch:
         self.ANET = ANET
         self.num_childstates = args.neurons_per_layer[len(
             args.neurons_per_layer) - 1]
-        self.root = self.make_node(root_state, None)
+        self.root = None
         self.tree = {self.get_hashed_state(root_state): self.root}
 
     def search_next_actual_move(self, epsilon):
-        self.root = self.make_node(self.simworld.get_game_state(), None)
+        if not self.root:
+            self.root = self.make_node(self.simworld.get_game_state(), None)
+        else:
+            self.root = self.prune_tree(self.simworld.get_game_state())
+
         # TODO prune tree according to new root
         for _ in range(self.simulations):
             self.simulate(epsilon)
@@ -210,6 +214,32 @@ class MonteCarloTreeSearch:
         if node.state[0] == 0:
             return True
         return False
+
+    def prune_tree(self, root_state):
+        hash_state = self.get_hashed_state(root_state)
+        # This is our new root_node, we want to prune all that exists above this
+        new_root_node = self.tree[hash_state]
+
+        def dive_and_burn(node):
+            if not node.gameover:
+                for child in range(len(node.children)):
+                    # burning all legal children
+                    if node.children[child]:
+                        dive_and_burn(node.children[child])
+            self.tree.pop(self.get_hashed_state(node.state))
+            node.children = None
+
+        # detach this new root_node from it's parent
+        a = new_root_node.parent.children.index(new_root_node)
+        new_root_node.parent.children[a] = None
+
+        real_root = new_root_node.parent
+        while real_root.parent:
+            real_root = real_root.parent
+        dive_and_burn(real_root)
+
+        new_root_node.parent = None
+        return new_root_node
 
 
 class Node():
