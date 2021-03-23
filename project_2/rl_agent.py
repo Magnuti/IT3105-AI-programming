@@ -112,20 +112,21 @@ class Actor:
         self.sim_world.pick_move(next_state)
 
     def train_ANET(self, plot=False):
-        batch_size = self.args.mini_batch_size
-        if len(self.replay_buffer) < batch_size:
-            batch_size = len(self.replay_buffer)
-        batch = random.choices(self.replay_buffer, k=batch_size)
-        x = []
-        y = []
-        for c in batch:
-            x.append(c[0])
-            y.append(c[1])
+        if len(self.replay_buffer) <= self.args.replay_buffer_selection_size:
+            # Select the entire replay buffer it is isn't filled up enough
+            random_selection = self.replay_buffer
+        else:
+            sample_size = self.args.replay_buffer_selection_size
+            # Random choice without replacement
+            random_selection = random.sample(self.replay_buffer, k=sample_size)
 
-        x = np.array(x)
-        y = np.array(y)
-        # batch_size None, since we are already serving only 1 mini-batch
-        history = self.ANET.fit(x, y, batch_size=None, epochs=self.args.epochs)
+        random_selection = np.array(random_selection)
+
+        x = random_selection[:, 0]
+        y = random_selection[:, 1]
+
+        history = self.ANET.fit(
+            x, y, batch_size=self.args.mini_batch_size, epochs=self.args.epochs)
 
         if plot:
             # TODO plot training graph (?), but atm there is no validation set
