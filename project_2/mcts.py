@@ -226,7 +226,7 @@ class MonteCarloTreeSearch:
                     # burning all legal children
                     if node.children[child]:
                         dive_and_burn(node.children[child])
-            self.tree.pop(self.get_hashed_state(node.state))
+            self.tree.pop(self.get_hashed_state(node.state), None)
             node.children = None
 
         # detach this new root_node from it's parent
