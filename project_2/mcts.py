@@ -206,6 +206,7 @@ class MonteCarloTreeSearch:
         return action_chosen
 
     def black_to_play(self, node):
+        # Differences between player ID [0, 1] and [1, 0]
         if node.state[0] == 0:
             return True
         return False
