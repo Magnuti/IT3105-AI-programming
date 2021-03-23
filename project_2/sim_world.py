@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 
 from visualization import visualize_board
 from constants import BoardCell
@@ -158,6 +159,7 @@ class SimWorldHex(SimWorldInterface):
         # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
         self.neighbor_sets = {0: [{"R1"}, {"R2"}], 1: [{"B1"}, {"B2"}]}
         self.graph = self.__init_graph(self.cells)
+        self.winner_set = set()
 
     def __init_neighbor_indices(self, board_size):
         cells = []
@@ -349,7 +351,7 @@ class SimWorldHex(SimWorldInterface):
 
         return False, 0
 
-    def update_graph_statuses(self):
+    def update_graph_statuses(self, game_over=False):
         for i in range(0, len(self.state), 2):
             cell_index = i // 2
             cell_state = self.state[i: i + 2]
@@ -359,13 +361,13 @@ class SimWorldHex(SimWorldInterface):
 
             elif np.array_equal(cell_state, self.player_id_to_array(0)):
                 # Player 0's cell
-                if cell_index in self.winner_set:
+                if cell_index in self.winner_set and game_over:
                     status = BoardCell.PLAYER_0_CELL_PART_OF_WINNING_PATH
                 else:
                     status = BoardCell.PLAYER_0_CELL
             elif np.array_equal(cell_state, self.player_id_to_array(1)):
                 # Player 1's cell
-                if cell_index in self.winner_set:
+                if cell_index in self.winner_set and game_over:
                     status = BoardCell.PLAYER_1_CELL_PART_OF_WINNING_PATH
                 else:
                     status = BoardCell.PLAYER_1_CELL
@@ -398,12 +400,17 @@ if __name__ == "__main__":
         sim_world.update_neighbor_sets(action_index)
         gameover, reward = sim_world.get_gameover_and_reward()
 
+        sim_world.update_graph_statuses()
+        visualize_board(sim_world.graph, list(
+            map(lambda x: x.status, sim_world.cells)), 0)
+
     # sim_world.print_current_game_state()
     if reward == 1:
         print("Black (player 1, player 2 in project spec) wins")
     else:
         print("Red (player 0, player 1 in project spec) wins")
 
-    sim_world.update_graph_statuses()
+    sim_world.update_graph_statuses(game_over=True)
     visualize_board(sim_world.graph, list(
         map(lambda x: x.status, sim_world.cells)), 0)
+    plt.show()
