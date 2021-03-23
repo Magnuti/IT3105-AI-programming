@@ -31,21 +31,33 @@ class SimWorldInterface:
         """
         Returns the state of the board with the first two indices being player bits.
         """
-        state = [0, 1] if self.current_player else [1, 0]
-        state.extend(self.state)
-        return np.array(state, dtype=int)
+        return np.concatenate((self.current_player, self.state))
 
     def get_child_states(self):
         raise NotImplementedError()
 
     def pick_move(self, next_state):
+        self.current_player = next_state[:2]
         self.state = next_state[2:]
-
-    def next_player(self):
-        self.current_player = 1 - self.current_player  # Flip between 0 and 1
 
     def get_gameover_and_reward(self):
         raise NotImplementedError()
+
+    def current_player_array_to_id(self):
+        if np.array_equal(self.current_player, np.array([0, 1], dtype=int)):
+            return 1
+        elif np.array_equal(self.current_player, np.array([1, 0], dtype=int)):
+            return 0
+        else:
+            raise ValueError("Illegal player:", self.current_player)
+
+    def player_id_to_array(self, player_id):
+        if player_id == 0:
+            return np.array([1, 0], dtype=int)
+        elif player_id == 1:
+            return np.array([0, 1], dtype=int)
+        else:
+            raise ValueError("Illegal player:", player_id)
 
     def print_current_game_state(self):
         game_state = self.get_game_state()
@@ -75,8 +87,9 @@ class SimWorldNim(SimWorldInterface):
         super().__init__()
 
     def reset_game(self):
-        self.current_player = 1
-        self.state = np.zeros(self.N, dtype=int)
+        self.current_player = self.player_id_to_array(0)
+        # +1 because we must include the zero piece
+        self.state = np.zeros(self.N + 1, dtype=int)
         self.state[-1] = 1
 
     def __get_remaining_pieces(self):
@@ -94,9 +107,9 @@ class SimWorldNim(SimWorldInterface):
             if i > self.__get_remaining_pieces():
                 child_states.append(None)
             else:
-                child_state = [0, 1] if self.current_player else [1, 0]
-                child_state.extend(np.roll(self.state, -i))
-                child_states.append(np.array(child_state, dtype=int))
+                next_player = np.roll(self.current_player, 1)
+                child_states.append(np.concatenate(
+                    (next_player, np.roll(self.state, -i))))
 
         return child_states
 
@@ -104,8 +117,13 @@ class SimWorldNim(SimWorldInterface):
         if self.__get_remaining_pieces() > 0:
             return False, 0
 
-        reward = 1 if self.current_player else -1
-        return True, reward
+        # Reversed because we look at the previous player, not the current one
+        if self.current_player_array_to_id() == 0:
+            return True, 1
+        elif self.current_player_array_to_id() == 1:
+            return True, -1
+        else:
+            raise ValueError("Illegal player:", self.current_player)
 
 
 class SimWorldHex(SimWorldInterface):
@@ -246,7 +264,7 @@ class SimWorldHex(SimWorldInterface):
             f"index '{index}' is not within the bounds given by board_size")
 
     def reset_game(self):
-        self.current_player = 1
+        self.current_player = self.player_id_to_array(0)
         # Each cell is represented as two bits [0, 0] = empty, [1, 0] = filled by
         # player 0, and [0, 1] = filled by player 1
         self.state = np.zeros(self.board_size ** 2 * 2, dtype=int)
@@ -264,21 +282,21 @@ class SimWorldHex(SimWorldInterface):
             [4:6], since the current player is 10
         """
         child_states = []
-        player_cells = np.array(
-            [0, 1]) if self.current_player else np.array([1, 0], dtype=int)
         for i in range(0, len(self.state), 2):
             if np.array_equal(self.state[i: i + 2], np.array([0, 0], dtype=int)):
                 # Empty cell
-                # The format is [current_player_id...current_player_id...]
-                # where we set current_player_id to some board cell.
+                # The format is [next_player...current_player...]
+                # where we set current_player to some board cell, and the next
+                # player to make a move is represented by the first two bits.
                 child_state = np.empty(2 + len(self.state), dtype=int)
-                child_state[:2] = player_cells
+                # Next player
+                child_state[:2] = np.roll(self.current_player, 1)
                 child_state[2:] = self.state
-                child_state[2 + i: 4 + i] = player_cells
-            elif np.array_equal(self.state[i: i + 2], np.array([1, 0], dtype=int)):
+                child_state[2 + i: 4 + i] = self.current_player
+            elif np.array_equal(self.state[i: i + 2], self.player_id_to_array(0)):
                 # Player 0's cell
                 child_state = None
-            elif np.array_equal(self.state[i: i + 2], np.array([0, 1], dtype=int)):
+            elif np.array_equal(self.state[i: i + 2], self.player_id_to_array(1)):
                 # Player 1's cell
                 child_state = None
             else:
@@ -291,10 +309,11 @@ class SimWorldHex(SimWorldInterface):
     def update_neighbor_sets(self, modified_cell_index):
         # This holds a list of all sets we want to combine since they share
         # a common cell.
+        prev_player = 1 - self.current_player_array_to_id()
         to_merge = [{modified_cell_index}]
-        self.neighbor_sets[self.current_player].append(to_merge[0])
+        self.neighbor_sets[prev_player].append(to_merge[0])
         for neighbour_index in self.neighbor_indices_list[modified_cell_index]:
-            for neighbor_set in self.neighbor_sets[self.current_player]:
+            for neighbor_set in self.neighbor_sets[prev_player]:
                 if neighbour_index in neighbor_set:
                     neighbor_set.add(modified_cell_index)
                     to_merge.append(neighbor_set)
@@ -306,24 +325,27 @@ class SimWorldHex(SimWorldInterface):
         for neighbor_set in to_merge:
             # The if statement avoids duplicate removes which happens if
             # the inserted cell has more than one neighbour.
-            if neighbor_set in self.neighbor_sets[self.current_player]:
-                self.neighbor_sets[self.current_player].remove(neighbor_set)
+            if neighbor_set in self.neighbor_sets[prev_player]:
+                self.neighbor_sets[prev_player].remove(neighbor_set)
 
-        self.neighbor_sets[self.current_player].append(new_set)
+        self.neighbor_sets[prev_player].append(new_set)
 
     def get_gameover_and_reward(self):
-        if self.current_player:
-            for neighbor_set in self.neighbor_sets[self.current_player]:
+        prev_player = 1 - self.current_player_array_to_id()
+        if prev_player == 1:
+            for neighbor_set in self.neighbor_sets[prev_player]:
                 if "B1" in neighbor_set and "B2" in neighbor_set:
                     self.winner_set = neighbor_set
                     # Black wins, player 1
                     return True, 1
-        else:
-            for neighbor_set in self.neighbor_sets[self.current_player]:
+        elif prev_player == 0:
+            for neighbor_set in self.neighbor_sets[prev_player]:
                 if "R1" in neighbor_set and "R2" in neighbor_set:
                     self.winner_set = neighbor_set
                     # Red wins, player 0
                     return True, -1
+        else:
+            raise ValueError()
 
         return False, 0
 
@@ -334,13 +356,14 @@ class SimWorldHex(SimWorldInterface):
             if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
                 # Empty cell
                 status = BoardCell.EMPTY_CELL
-            elif np.array_equal(cell_state, np.array([1, 0], dtype=int)):
+
+            elif np.array_equal(cell_state, self.player_id_to_array(0)):
                 # Player 0's cell
                 if cell_index in self.winner_set:
                     status = BoardCell.PLAYER_0_CELL_PART_OF_WINNING_PATH
                 else:
                     status = BoardCell.PLAYER_0_CELL
-            elif np.array_equal(cell_state, np.array([0, 1], dtype=int)):
+            elif np.array_equal(cell_state, self.player_id_to_array(1)):
                 # Player 1's cell
                 if cell_index in self.winner_set:
                     status = BoardCell.PLAYER_1_CELL_PART_OF_WINNING_PATH
@@ -359,7 +382,6 @@ if __name__ == "__main__":
     gameover, reward = sim_world.get_gameover_and_reward()
     while not gameover:
         # sim_world.print_current_game_state()
-        sim_world.next_player()
         child_states = sim_world.get_child_states()
         legal_child_states = []
         for i in range(len(child_states)):
@@ -372,8 +394,8 @@ if __name__ == "__main__":
             if np.array_equal(next_state, state):
                 action_index = i
 
-        sim_world.update_neighbor_sets(action_index)
         sim_world.pick_move(next_state)
+        sim_world.update_neighbor_sets(action_index)
         gameover, reward = sim_world.get_gameover_and_reward()
 
     # sim_world.print_current_game_state()
