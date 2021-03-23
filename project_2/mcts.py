@@ -18,13 +18,16 @@ class MonteCarloTreeSearch:
         '''
 
         # TODO CYT
-        self.num_childstates = args.board_size**2
-        self.root = self.make_node(root_state, None)
-        self.tree = {self.get_hashed_state(root_state): self.root}
         self.explore_constant = explore_constant
         self.simworld = simworld
         self.simulations = args.simulations
         self.ANET = ANET
+        net_layers_len = len(ANET.layers)
+        net_out_layer = ANET.layers[net_layers_len - 1]
+        out_dim = net_out_layer[len(net_out_layer) - 1]
+        self.num_childstates = out_dim
+        self.root = self.make_node(root_state, None)
+        self.tree = {self.get_hashed_state(root_state): self.root}
 
     def search_next_actual_move(self, epsilon):
         self.root = self.make_node(self.simworld.get_game_state(), None)
