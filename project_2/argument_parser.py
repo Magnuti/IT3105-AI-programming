@@ -18,11 +18,12 @@ class Arguments:
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions
-        # One input neuron for each state we can be in + the ID of the player (two bits)
+        # One input neuron for each state we can be in (11 for a 10 piece
+        # game since we can have [0-10] pieces) + the ID of the player (two bits)
         # One output neuron for each action
         # + 2 to input dimension because we need two bits to represent the current player
         if self.game_type == GameType.NIM:
-            self.neurons_per_layer.insert(0, self.nim_N + 2)
+            self.neurons_per_layer.insert(0, self.nim_N + 3)
             self.neurons_per_layer.append(self.nim_K)
         elif self.game_type == GameType.HEX:
             self.neurons_per_layer.insert(0, self.board_size ** 2 + 2)
