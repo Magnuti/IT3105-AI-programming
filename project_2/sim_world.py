@@ -1,8 +1,7 @@
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
 
-from visualization import visualize_board
+from visualization import visualize_board, keep_board_visualization_visible
 from constants import BoardCell
 
 """
@@ -156,8 +155,16 @@ class SimWorldHex(SimWorldInterface):
         # Each player has a list of disjoint sets. When A and B are in the
         # same set we have a winner.
         super().__init__()
+
+    def reset_game(self):
+        self.current_player = self.player_id_to_array(0)
+        # Each cell is represented as two bits [0, 0] = empty, [1, 0] = filled by
+        # player 0, and [0, 1] = filled by player 1
+        self.state = np.zeros(self.board_size ** 2 * 2, dtype=int)
         # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
         self.neighbor_sets = {0: [{"R1"}, {"R2"}], 1: [{"B1"}, {"B2"}]}
+        # TODO set all cell status to emtpy instead of rebuilding
+        # TODO this will save time in the TOPP
         self.graph = self.__init_graph(self.cells)
         self.winner_set = set()
 
@@ -264,12 +271,6 @@ class SimWorldHex(SimWorldInterface):
                 count += 1
         raise IndexError(
             f"index '{index}' is not within the bounds given by board_size")
-
-    def reset_game(self):
-        self.current_player = self.player_id_to_array(0)
-        # Each cell is represented as two bits [0, 0] = empty, [1, 0] = filled by
-        # player 0, and [0, 1] = filled by player 1
-        self.state = np.zeros(self.board_size ** 2 * 2, dtype=int)
 
     def get_child_states(self):
         """
@@ -413,4 +414,4 @@ if __name__ == "__main__":
     sim_world.update_graph_statuses(game_over=True)
     visualize_board(sim_world.graph, list(
         map(lambda x: x.status, sim_world.cells)), 0)
-    plt.show()
+    keep_board_visualization_visible()

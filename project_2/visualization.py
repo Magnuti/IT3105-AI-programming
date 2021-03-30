@@ -35,3 +35,9 @@ def visualize_board(graph, state_status_list, episode):
             with_labels=False, node_color=fillcolor_map, edgecolors=edgecolor_map, linewidths=3.0)
     plt.show(block=False)
     plt.pause(0.001)
+
+
+def keep_board_visualization_visible():
+    # Call this after visualize_board() to keep the plot visible.
+    # This function was created so that we don't need to import plt everywhere
+    plt.show()

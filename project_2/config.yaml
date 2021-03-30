@@ -1,5 +1,5 @@
 # The type of game to be played [nim, hex]
-game_type: nim
+game_type: hex
 
 ### Nim variables ###
 
@@ -13,7 +13,7 @@ nim_K: 5
 ### Hex variables ###
 
 # Recommended size in the interval [3, 10]
-board_size: 3
+board_size: 4
 
 ### Hex variables end ###
 
@@ -30,7 +30,7 @@ learning_rate: 0.01
 # List of neurons in each hidden layer. Set to an empty list if no hidden
 # layers should be used. The input/output dimensions are automatically
 # calculated based on board_size.
-neurons_per_hidden_layer: [20, 20]
+neurons_per_hidden_layer: [15, 15]
 
 # Activation function for each layer (except the input layer)
 # Options [linear, sigmoid, tanh, relu]
