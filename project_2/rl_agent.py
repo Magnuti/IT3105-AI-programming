@@ -122,14 +122,15 @@ class Actor:
             sample_size = self.args.replay_buffer_selection_size
             # Random choice without replacement
             random_selection = random.sample(self.replay_buffer, k=sample_size)
-        random_selection = np.array(random_selection, dtype=object)
 
-        x = random_selection[:, 0]
-        x = x.tolist()
-        # print(x[0].dtype, x)
-        y = random_selection[:, 1]
-        y = y.tolist()
-        # print(y[0].dtype, y)
+        # TODO it may be an idea to split replay_buffer into replay_buffer_x and
+        # replay_buffer_y so we can skip this part
+        x = np.empty((len(random_selection), len(random_selection[0][0])))
+        y = np.empty((len(random_selection), len(random_selection[0][1])))
+
+        for i, train_case in enumerate(random_selection):
+            x[i] = train_case[0]
+            y[i] = train_case[1]
 
         history = self.ANET.fit(
             x, y, batch_size=self.args.mini_batch_size, epochs=self.args.epochs)

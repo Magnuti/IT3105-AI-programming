@@ -30,6 +30,12 @@ class MonteCarloTreeSearch:
         self.gametype = args.game_type
 
     def search_next_actual_move(self, epsilon):
+        """
+        Return
+            next_state
+            train_case: tuple with root state and target distribution which is
+            to be added into the replay buffer.
+        """
         if not self.root:
             self.root = self.make_node(self.simworld.get_game_state(), None)
             self.tree[self.get_hashed_state(self.root.state)] = self.root
@@ -56,7 +62,7 @@ class MonteCarloTreeSearch:
         target_norm = np.sum(target_dist)
         target_dist /= target_norm
 
-        return children[move_num].state, np.array([self.root.state, target_dist], dtype=object)
+        return children[move_num].state, (self.root.state, target_dist)
 
     def simulate(self, epsilon):
         self.simworld.pick_move(self.root.state)
