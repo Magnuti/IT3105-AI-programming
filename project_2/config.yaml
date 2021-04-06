@@ -1,29 +1,43 @@
-# The type of game to be played [nim, hex]
-game_type: hex
+######################################################
+### General ###
+######################################################
 
+# The type of game to be played [nim, hex]
+game_type: nim
+
+episodes: 10
+
+# How many simulations (i.e., search games) to perform per each actual move, where
+# one simulation is a tree search followed by a rollout.
+simulations: 10
+
+epsilon: 1
+
+# How epsilon should decay [exponential, reversed_sigmoid, linear]
+epsilon_decay_function: exponential
+# The rate in which the epsilon decreases as given by e <- e * epsilon_decay
+# Only used for epsilon_decay_function: exponential
+epsilon_decay: 0.9955
+
+######################################################
 ### Nim variables ###
+######################################################
 
 # The number of pieces on the board
 nim_N: 10
 # The maximum number that a player can take off the board on their turn.
 nim_K: 5
 
-### Nim variables end ###
-
+######################################################
 ### Hex variables ###
+######################################################
 
 # Recommended size in the interval [3, 10]
 board_size: 4
 
-### Hex variables end ###
-
-episodes: 1
-
-# How many simulations (i.e., search games) to perform per each actual move, where
-# one simulation is a tree search followed by a rollout.
-simulations: 10
-
+######################################################
 ### Parameters for the actor neural network (ANET) ###
+######################################################
 
 learning_rate: 0.01
 
@@ -54,6 +68,9 @@ epochs: 10
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
 games_to_save: 5
 
+######################################################
+### TOURNAMENTS ###
+######################################################
 # The number of games to be played between any two ANET-based agents that
 # meet during the round-robin play of the TOPP.
 games_between_agents: 5

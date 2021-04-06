@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import math
+from constants import GameType
 
 
 # TODO CYT: would it make sense to inherit from Node-class, so this class understands the node-attribs? (if that's how inheritance even works)
@@ -11,7 +12,7 @@ class MonteCarloTreeSearch:
 
     '''
 
-    def __init__(self, root_state, explore_constant, simworld, ANET, args):
+    def __init__(self, explore_constant, simworld, ANET, args):
         '''
         args:
             simworld:  actual_simworld, which state is reset at end of search_next_actual_move()
@@ -25,15 +26,20 @@ class MonteCarloTreeSearch:
         self.num_childstates = args.neurons_per_layer[len(
             args.neurons_per_layer) - 1]
         self.root = None
-        self.tree = {self.get_hashed_state(root_state): self.root}
+        self.tree = {}
+        self.gametype = args.game_type
 
     def search_next_actual_move(self, epsilon):
         if not self.root:
             self.root = self.make_node(self.simworld.get_game_state(), None)
+            self.tree[self.get_hashed_state(self.root.state)] = self.root
+        # TODO ! this whole elif-block can be deleted when progressing to HEX games (NIM can't prune the tree)
+        elif self.gametype == GameType.NIM:
+            self.root = self.tree[self.get_hashed_state(
+                self.simworld.get_game_state())]
         else:
             self.root = self.prune_tree(self.simworld.get_game_state())
 
-        # TODO prune tree according to new root
         for _ in range(self.simulations):
             self.simulate(epsilon)
         # reset simworld to the root_state (actual_state before search)
@@ -44,11 +50,13 @@ class MonteCarloTreeSearch:
         move_num = self.tree_select_move(self.root, len(children))
 
         # Make training case for root_node
+        # TODO CYT, may need to drop np if cythonizing this func
         target_dist = np.array([self.root.action_visit[a]
-                                for a in range(len(children))])
+                                for a in range(len(children))], dtype=np.float32)
         target_norm = np.sum(target_dist)
         target_dist /= target_norm
-        return children[move_num].state, [self.root.state, target_dist]
+
+        return children[move_num].state, np.array([self.root.state, target_dist], dtype=object)
 
     def simulate(self, epsilon):
         self.simworld.pick_move(self.root.state)
@@ -60,7 +68,7 @@ class MonteCarloTreeSearch:
     # using UCT algorithm
     def tree_search(self):
         previous_node = None
-        # This only gets set to False if a gameover node that already exists in the tree is picked. This pre-existing node would have children (it's expanded) but all childs are None
+        # This only gets set to False if a gameover node that already exists in the tree is picked. This pre-existing node would have children (it's expanded) but all children are None
         continue_search = True
         while continue_search:
             state = self.simworld.get_game_state()
@@ -96,7 +104,7 @@ class MonteCarloTreeSearch:
         children = [None]*self.num_childstates
         for i in range(len(child_states)):
             # this mean the child_state is legal (for illegal children, the related position in children[] is already None)
-            if child_states[i]:
+            if child_states[i] is not None:
                 has_legal_child = True
                 node = self.make_node(child_states[i], parent_node=parent_node)
                 # attach child to our lookup-tree
@@ -167,6 +175,7 @@ class MonteCarloTreeSearch:
             a = node.children.index(node_child)
             # Upd N(s,a), E, Q(s, a)
             # E_a is accumulated reward for action (over all searches in this tree)
+
             node.action_visit[a] += 1
             node.action_cumreward[a] += z
             node.action_value[a] = node.action_cumreward[a] / \
@@ -204,6 +213,7 @@ class MonteCarloTreeSearch:
                 if not node.children[a]:
                     values.append(math.inf)
                     continue
+
                 values.append(node.action_value[a] - self.explore_constant *
                               math.sqrt(math.log(node.visit) / node.action_visit[a]))
             action_chosen = values.index(min(values))
@@ -221,7 +231,7 @@ class MonteCarloTreeSearch:
         new_root_node = self.tree[hash_state]
 
         def dive_and_burn(node):
-            if not node.gameover:
+            if not node.gameover and node.children is not None:
                 for child in range(len(node.children)):
                     # burning all legal children
                     if node.children[child]:
@@ -234,6 +244,7 @@ class MonteCarloTreeSearch:
         new_root_node.parent.children[a] = None
 
         real_root = new_root_node.parent
+
         while real_root.parent:
             real_root = real_root.parent
         dive_and_burn(real_root)
@@ -262,7 +273,8 @@ class Node():
 
         # TODO CYT: arrays<float> filled with zero need to be initilized with a range that sets all spots to 0 think (look it up)
         self.action_value = [0] * num_childstates
-        self.action_visit = [0] * num_childstates
         self.action_cumreward = [0] * num_childstates
-        self.visit = [0] * num_childstates
+        # initialized with 1 so we don't divide by 0
+        self.action_visit = [1] * num_childstates
+        self.visit = 1
         self.gameover = False

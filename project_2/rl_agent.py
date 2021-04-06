@@ -33,6 +33,9 @@ class RL_agent:
         for episode in range(self.args.episodes):
             if(episode % 100 == 0 or episode == self.args.episodes - 1):
                 print("--- Episode {} ---".format(episode))
+            if episode % self.args.games_to_save == 0:
+                print('SAVING')
+                self.actor.ANET.save_model(episode)
 
             # self.critic.new_episode()
             # TODO is this needed ?
@@ -40,13 +43,13 @@ class RL_agent:
             # SAP_list_in_current_episode.clear()
 
             # EPSILON UPDATE
-            if self.args.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL:
+            if self.args.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL.value:
                 self.epsilon *= self.epsilon_decay
-            elif self.args.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID:
+            elif self.args.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID.value:
                 # Horizontally flipped Sigmoid
                 self.epsilon = 1 / \
                     (1+np.exp((episode-(self.args.episodes/2))/(self.args.episodes*0.08)))
-            elif self.args.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
+            elif self.args.epsilon_decay_function == EpsilonDecayFunction.LINEAR.value:
                 self.epsilon -= self.epsilon_decay
             else:
                 raise NotImplementedError()
@@ -100,7 +103,7 @@ class Actor:
         # TODO we need to pass in explore_constant, which should probably be decaying
         temp_explore_constant = 0.7
         self.MCTS = MonteCarloTreeSearch(
-            root_state=sim_world.get_game_state(), explore_constant=temp_explore_constant, simworld=sim_world, ANET=self.ANET, args=args)
+            explore_constant=temp_explore_constant, simworld=sim_world, ANET=self.ANET, args=args)
         self.replay_buffer = []
         self.args = args
 
@@ -119,10 +122,10 @@ class Actor:
             sample_size = self.args.replay_buffer_selection_size
             # Random choice without replacement
             random_selection = random.sample(self.replay_buffer, k=sample_size)
-
-        random_selection = np.array(random_selection)
+        random_selection = np.array(random_selection, dtype=object)
 
         x = random_selection[:, 0]
+        print(x[0].dtype, x)
         y = random_selection[:, 1]
 
         history = self.ANET.fit(
