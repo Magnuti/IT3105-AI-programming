@@ -127,6 +127,7 @@ class Actor:
         x = random_selection[:, 0]
         print(x[0].dtype, x)
         y = random_selection[:, 1]
+        print(y[0].dtype, y)
 
         history = self.ANET.fit(
             x, y, batch_size=self.args.mini_batch_size, epochs=self.args.epochs)
