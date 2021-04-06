@@ -125,9 +125,11 @@ class Actor:
         random_selection = np.array(random_selection, dtype=object)
 
         x = random_selection[:, 0]
-        print(x[0].dtype, x)
+        x = x.tolist()
+        # print(x[0].dtype, x)
         y = random_selection[:, 1]
-        print(y[0].dtype, y)
+        y = y.tolist()
+        # print(y[0].dtype, y)
 
         history = self.ANET.fit(
             x, y, batch_size=self.args.mini_batch_size, epochs=self.args.epochs)
