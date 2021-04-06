@@ -30,11 +30,14 @@ class RL_agent:
         # TODO Think it's helpful to just plot this to see how it's manifesting
         epsilon_history = []
 
+        episode_save = self.args.episodes // (self.args.games_to_save - 1)
+        print("Saving every {}th episode".format(episode_save))
         for episode in range(self.args.episodes):
-            if(episode % 100 == 0 or episode == self.args.episodes - 1):
+            last_episode = episode == self.args.episodes - 1
+            if(episode % 100 == 0 or last_episode):
                 print("--- Episode {} ---".format(episode))
-            if episode % self.args.games_to_save == 0:
-                print('SAVING')
+            if episode % episode_save == 0 or last_episode:
+                print("Saving episode", episode)
                 self.actor.ANET.save_model(episode)
 
             # self.critic.new_episode()
@@ -53,7 +56,7 @@ class RL_agent:
                 self.epsilon -= self.epsilon_decay
             else:
                 raise NotImplementedError()
-            if(episode == self.args.episodes - 1):
+            if last_episode:
                 self.epsilon = 0  # Target policy for last run
 
             # TODO: (?) need child_states with visualization like in project 1
@@ -81,7 +84,7 @@ class RL_agent:
                 gameover, reward = self.sim_world.get_gameover_and_reward()
 
                 # # visualize current episode if it's in visualize_training_episodes or last episode
-                # if (self.args.visualize and (episode in self.args.visualize_training_episodes or episode == self.args.episodes - 1)):
+                # if (self.args.visualize and (episode in self.args.visualize_training_episodes or last_episode)):
                 #     # TODO
                 #     # visualize_board(self.sim_world.graph, new_state_with_visualization, episode=episode)
                 #     # time.sleep(self.args.frame_time)
@@ -89,7 +92,7 @@ class RL_agent:
 
             epsilon_history.append(self.epsilon)
 
-            if episode < self.args.episodes - 1:
+            if not last_episode:
                 self.sim_world.reset_game()
                 self.actor.train_ANET()
 
