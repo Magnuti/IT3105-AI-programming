@@ -37,6 +37,7 @@ class MonteCarloTreeSearch:
             train_case: tuple with root state and target distribution which is
             to be added into the replay buffer.
         """
+        # TODO This whole block should be removed, MSTC should not know what game it is playing
         if not self.root:
             self.root = self.make_node(self.simworld.get_game_state(), None)
             self.tree[self.get_hashed_state(self.root.state)] = self.root
@@ -77,7 +78,8 @@ class MonteCarloTreeSearch:
     # using UCT algorithm
     def tree_search(self):
         previous_node = None
-        # This only gets set to False if a gameover node that already exists in the tree is picked. This pre-existing node would have children (it's expanded) but all children are None
+        # This only gets set to False if a gameover node that already exists in the tree is picked.
+        # This pre-existing node would have children (it's expanded) but all children are None
         continue_search = True
         while continue_search:
             state = self.simworld.get_game_state()
@@ -121,6 +123,7 @@ class MonteCarloTreeSearch:
                 # attach child to it's parent
                 children[i] = node
         if not has_legal_child:
+            # ! parent_node can also be game over even though it contains legal children
             parent_node.gameover = True
         parent_node.children = children
 
