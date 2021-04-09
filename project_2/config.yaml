@@ -3,13 +3,13 @@
 ######################################################
 
 # The type of game to be played [nim, hex]
-game_type: nim
+game_type: hex
 
-episodes: 10
+episodes: 200
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
-simulations: 10
+simulations: 200
 
 epsilon: 1
 
@@ -47,9 +47,10 @@ learning_rate: 0.01
 neurons_per_hidden_layer: [15, 15]
 
 # Activation function for each layer (except the input layer)
-# Options [linear, sigmoid, tanh, relu]
-# For example a network with 2 hidden layers: [sigmoid, relu, relu]
-activation_functions: [relu, relu, linear]
+# Options [linear, sigmoid, tanh, relu, softmax]
+# For example a network with 2 hidden layers: [sigmoid, relu, softmax]
+# SoftMax is highly recommended in the output layer
+activation_functions: [relu, relu, softmax]
 
 # [Adagrad, SGD, RMSProp, Adam]
 # SGD = Stochastic Gradient Descent

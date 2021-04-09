@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-import pathlib
 import numpy as np
 
 from visualization import visualize_board, keep_board_visualization_visible
@@ -10,12 +9,10 @@ from function_approximator import ANET
 
 
 class TournamentOfProgressivePolicies:
-    def __init__(self, args, sim_world):
+    def __init__(self, args, sim_world, model_save_path):
         self.args = args
         self.sim_world = sim_world
-
-        self.save_path = pathlib.Path("saved_models")
-        self.save_path.mkdir(exist_ok=True)
+        self.model_save_path = model_save_path
 
     def round_robin_tournament(self, games_between_agents):
         """
@@ -30,8 +27,9 @@ class TournamentOfProgressivePolicies:
 
         anets = {}
         victories_per_anet = {}
-        for path in self.save_path.iterdir():
-            anet = ANET(args.neurons_per_layer, args.activation_functions)
+        for path in self.model_save_path.iterdir():
+            anet = ANET(self.args.neurons_per_layer,
+                        self.args.activation_functions)
             anet.load_model_path_known(path)
             anets[path.name] = anet
             victories_per_anet[path.name] = 0
@@ -45,7 +43,7 @@ class TournamentOfProgressivePolicies:
                     # Play a game between model_0 and model_1
                     self.sim_world.reset_game()
 
-                    gameover, reward = sim_world.get_gameover_and_reward()
+                    gameover, reward = self.sim_world.get_gameover_and_reward()
                     while not gameover:
                         # Batch size is 1 so we get the output by indexing [0]
 
@@ -72,11 +70,8 @@ class TournamentOfProgressivePolicies:
                         move_index = np.argmax(output_propabilities)
                         self.sim_world.pick_move(child_states[move_index])
 
-                        sim_world.update_neighbor_sets(move_index)
-                        gameover, reward = sim_world.get_gameover_and_reward()
+                        gameover, reward = self.sim_world.get_gameover_and_reward()
 
-                        # TODO dont do neighbour stuff on nim games
-                        sim_world.update_graph_statuses()
                         # visualize_board(sim_world.graph, list(
                         # map(lambda x: x.status, sim_world.cells)), 0)
                         # sim_world.print_current_game_state()
@@ -88,7 +83,6 @@ class TournamentOfProgressivePolicies:
                         # print("Red (player 0, player 1 in project spec) wins")
                         victories_per_anet[anet_0_name] += 1
 
-                    sim_world.update_graph_statuses(game_over=True)
                     # visualize_board(sim_world.graph, list(
                     # map(lambda x: x.status, sim_world.cells)), 0)
                     # keep_board_visualization_visible()

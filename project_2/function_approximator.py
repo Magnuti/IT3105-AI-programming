@@ -1,6 +1,5 @@
 from tensorflow import keras
 from tensorflow.keras import layers
-import pathlib
 
 from argument_parser import Arguments
 
@@ -15,13 +14,11 @@ class ANET:
         self.neurons_per_layer = neurons_per_layer
         self.activation_functions = activation_functions
 
-        self.save_path = pathlib.Path("saved_models")
-        self.save_path.mkdir(exist_ok=True)
-
         self.build_network()
 
     def build_network(self, lrate=0.01, opt=keras.optimizers.SGD,
                       loss=keras.losses.categorical_crossentropy):
+        # TODO take loss as config param
         model = keras.models.Sequential()
 
         for i, node_count in enumerate(self.neurons_per_layer):
@@ -46,14 +43,15 @@ class ANET:
         return self.model.fit(
             x, y, batch_size=batch_size, epochs=epochs, verbose=verbose)
 
-    def __get_file_path(self, episode):
-        return self.save_path.joinpath("anet_episode_{}".format(episode))
+    def __get_file_path(self, episode, save_path):
+        return save_path.joinpath("anet_episode_{}".format(episode))
 
-    def save_model(self, episode):
-        self.model.save(self.__get_file_path(episode))
+    def save_model(self, episode, save_path):
+        self.model.save(self.__get_file_path(episode, save_path))
 
-    def load_model(self, episode):
-        self.model = keras.models.load_model(self.__get_file_path(episode))
+    def load_model(self, episode, save_path):
+        self.model = keras.models.load_model(
+            self.__get_file_path(episode, save_path))
 
     def load_model_path_known(self, file_path):
         self.model = keras.models.load_model(file_path)

@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import math
+# ! Remove all traces of GameType, MCTS should not know what game is is playing
 from constants import GameType
 
 
@@ -46,8 +47,10 @@ class MonteCarloTreeSearch:
         else:
             self.root = self.prune_tree(self.simworld.get_game_state())
 
+        # Run simulations
         for _ in range(self.simulations):
             self.simulate(epsilon)
+
         # reset simworld to the root_state (actual_state before search)
         self.simworld.pick_move(self.root.state)
 
@@ -284,3 +287,10 @@ class Node():
         self.action_visit = [1] * num_childstates
         self.visit = 1
         self.gameover = False
+
+    def __str__(self):
+        x = type(self).__name__ + ": {\n"
+        for key, value in self.__dict__.items():
+            x += "\t{}: {}\n".format(key, value)
+        x += "}"
+        return x

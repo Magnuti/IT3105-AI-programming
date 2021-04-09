@@ -3,6 +3,7 @@ import networkx as nx
 
 from visualization import visualize_board, keep_board_visualization_visible
 from constants import BoardCell
+from disjoint_set import DisjointSet
 
 """
 Player 1 = [0, 1], player 0 = [1, 0]
@@ -36,9 +37,9 @@ class SimWorldInterface:
     def get_child_states(self):
         raise NotImplementedError()
 
-    def pick_move(self, next_state):
-        self.current_player = next_state[:2]
-        self.state = next_state[2:]
+    def pick_move(self, next_player_and_next_state):
+        self.current_player = next_player_and_next_state[:2]
+        self.state = next_player_and_next_state[2:]
 
     def get_gameover_and_reward(self):
         raise NotImplementedError()
@@ -51,6 +52,7 @@ class SimWorldInterface:
         else:
             raise ValueError("Illegal player:", self.current_player)
 
+    # TODO some of these calls should be made into constant since they don't change
     def player_id_to_array(self, player_id):
         if player_id == 0:
             return np.array([1, 0], dtype=int)
@@ -161,8 +163,6 @@ class SimWorldHex(SimWorldInterface):
         # Each cell is represented as two bits [0, 0] = empty, [1, 0] = filled by
         # player 0, and [0, 1] = filled by player 1
         self.state = np.zeros(self.board_size ** 2 * 2, dtype=int)
-        # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
-        self.neighbor_sets = {0: [{"R1"}, {"R2"}], 1: [{"B1"}, {"B2"}]}
         # TODO set all cell status to emtpy instead of rebuilding
         # TODO this will save time in the TOPP
         self.graph = self.__init_graph(self.cells)
@@ -309,50 +309,67 @@ class SimWorldHex(SimWorldInterface):
 
         return child_states
 
-    def update_neighbor_sets(self, modified_cell_index):
-        # This holds a list of all sets we want to combine since they share
-        # a common cell.
-        prev_player = 1 - self.current_player_array_to_id()
-        to_merge = [{modified_cell_index}]
-        self.neighbor_sets[prev_player].append(to_merge[0])
-        for neighbour_index in self.neighbor_indices_list[modified_cell_index]:
-            for neighbor_set in self.neighbor_sets[prev_player]:
-                if neighbour_index in neighbor_set:
-                    neighbor_set.add(modified_cell_index)
-                    to_merge.append(neighbor_set)
-
-        new_set = set()
-        for merge_set in to_merge:
-            new_set = new_set.union(merge_set)
-
-        for neighbor_set in to_merge:
-            # The if statement avoids duplicate removes which happens if
-            # the inserted cell has more than one neighbour.
-            if neighbor_set in self.neighbor_sets[prev_player]:
-                self.neighbor_sets[prev_player].remove(neighbor_set)
-
-        self.neighbor_sets[prev_player].append(new_set)
-
     def get_gameover_and_reward(self):
-        prev_player = 1 - self.current_player_array_to_id()
-        if prev_player == 1:
-            for neighbor_set in self.neighbor_sets[prev_player]:
-                if "B1" in neighbor_set and "B2" in neighbor_set:
-                    self.winner_set = neighbor_set
-                    # Black wins, player 1
-                    return True, 1
-        elif prev_player == 0:
-            for neighbor_set in self.neighbor_sets[prev_player]:
-                if "R1" in neighbor_set and "R2" in neighbor_set:
-                    self.winner_set = neighbor_set
-                    # Red wins, player 0
-                    return True, -1
-        else:
-            raise ValueError()
+        # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
+        player_0_cells = {"R1", "R2"}
+        player_1_cells = {"B1", "B2"}
 
-        return False, 0
+        for i in range(0, len(self.state), 2):
+            cell_index = i // 2
+            cell_state = self.state[i: i + 2]
 
-    def update_graph_statuses(self, game_over=False):
+            if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
+                # Empty cell
+                continue
+            elif np.array_equal(cell_state, self.player_id_to_array(0)):
+                # Player 0's cell
+                player_0_cells.add(cell_index)
+            elif np.array_equal(cell_state, self.player_id_to_array(1)):
+                # Player 1's cell
+                player_1_cells.add(cell_index)
+            else:
+                raise ValueError("Illegal value in self.state", self.state)
+
+        disjoint_set_player_0 = DisjointSet(player_0_cells)
+        disjoint_set_player_1 = DisjointSet(player_1_cells)
+
+        for cell in player_0_cells:
+            if cell == "R1" or cell == "R2":
+                continue
+            for neighbor_cell in self.neighbor_indices_list[cell]:
+                if neighbor_cell in player_0_cells:
+                    disjoint_set_player_0.union(cell, neighbor_cell)
+
+        game_over = False
+        reward = 0
+
+        # Find out if they are in the same set
+        if disjoint_set_player_0.find("R1") == disjoint_set_player_0.find("R2"):
+            # Red wins, player 0
+            self.winner_set = player_0_cells
+            game_over = True
+            reward = -1
+
+        for cell in player_1_cells:
+            if cell == "B1" or cell == "B2":
+                continue
+            for neighbor_cell in self.neighbor_indices_list[cell]:
+                if neighbor_cell in player_1_cells:
+                    disjoint_set_player_1.union(cell, neighbor_cell)
+
+        # Find out if they are in the same set
+        if disjoint_set_player_1.find("B1") == disjoint_set_player_1.find("B2"):
+            # Black wins, player 1
+            self.winner_set = player_1_cells
+            game_over = True
+            reward = 1
+
+        # # TODO only do this if visualize is set to true or something like that
+        self.__update_graph_statuses(game_over)
+
+        return game_over, reward
+
+    def __update_graph_statuses(self, game_over=False):
         for i in range(0, len(self.state), 2):
             cell_index = i // 2
             cell_state = self.state[i: i + 2]
@@ -391,17 +408,13 @@ if __name__ == "__main__":
             if child_states[i] is not None:
                 legal_child_states.append(child_states[i])
 
+        # For simplicity we just select a random legal action here
         legal_action_index = np.random.randint(0, len(legal_child_states))
         next_state = legal_child_states[legal_action_index]
-        for i, state in enumerate(child_states):
-            if np.array_equal(next_state, state):
-                action_index = i
 
         sim_world.pick_move(next_state)
-        sim_world.update_neighbor_sets(action_index)
         gameover, reward = sim_world.get_gameover_and_reward()
 
-        sim_world.update_graph_statuses()
         visualize_board(sim_world.graph, list(
             map(lambda x: x.status, sim_world.cells)), 0)
 
@@ -411,7 +424,6 @@ if __name__ == "__main__":
     else:
         print("Red (player 0, player 1 in project spec) wins")
 
-    sim_world.update_graph_statuses(game_over=True)
     visualize_board(sim_world.graph, list(
         map(lambda x: x.status, sim_world.cells)), 0)
     keep_board_visualization_visible()

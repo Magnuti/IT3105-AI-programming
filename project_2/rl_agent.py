@@ -13,11 +13,12 @@ class RL_agent:
     This class houses the actor (and the critic, if we are using one).
     """
 
-    def __init__(self, sim_world, args):
+    def __init__(self, sim_world, args, model_save_path):
         self.sim_world = sim_world
         # The reason I set this as its own attribute is that it's changed during the runs
         self.epsilon = args.epsilon  # Decays over time
         self.args = args
+        self.model_save_path = model_save_path
 
         if args.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
             self.epsilon_decay = self.epsilon / self.args.episodes  # Linear decay
@@ -38,7 +39,7 @@ class RL_agent:
                 print("--- Episode {} ---".format(episode))
             if episode % episode_save == 0 or last_episode:
                 print("Saving episode", episode)
-                self.actor.ANET.save_model(episode)
+                self.actor.ANET.save_model(episode, self.model_save_path)
 
             # self.critic.new_episode()
             # TODO is this needed ?

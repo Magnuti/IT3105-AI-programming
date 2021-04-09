@@ -19,6 +19,7 @@ class ActivationFunction(Enum):
     SIGMOID = "sigmoid"
     TANH = "tanh"
     RELU = "relu"
+    SOFTMAX = "softmax"
 
 
 class Optimizer(Enum):
