@@ -39,13 +39,13 @@ class MonteCarloTreeSearch:
         """
         # TODO This whole block should be removed, MSTC should not know what game it is playing
         if not self.root:
-            self.root = self.make_node(self.simworld.get_game_state(), None)
+            self.root = self.make_node(self.simworld.get_game_state())
             self.tree[self.get_hashed_state(self.root.state)] = self.root
         else:
             self.root = self.tree[self.get_hashed_state(
                 self.simworld.get_game_state())]
-            # Remove unused states from self.tree
-            self.rebuild_tree()
+            # Remove unused states from self.tree (prune)
+            self.prune_tree()
 
         # Run simulations
         for _ in range(self.simulations):
@@ -69,10 +69,11 @@ class MonteCarloTreeSearch:
 
     def simulate(self, epsilon):
         self.simworld.pick_move(self.root.state)
-        leaf_node = self.tree_search()
+        leaf_node, tree_search_path = self.tree_search()
         self.simworld.pick_move(leaf_node.state)
         z = self.leaf_eval(epsilon)
-        self.backprop(leaf_node, z)
+        if len(tree_search_path):
+            self.backprop(leaf_node, z, tree_search_path)
 
     # using UCT algorithm
     def tree_search(self):
@@ -80,6 +81,7 @@ class MonteCarloTreeSearch:
         # This only gets set to False if a gameover node that already exists in the tree is picked.
         # This pre-existing node would have children (it's expanded) but all children are None
         continue_search = True
+        tree_search_path = []
         while continue_search:
             state = self.simworld.get_game_state()
             hash_state = self.get_hashed_state(state)
@@ -92,7 +94,9 @@ class MonteCarloTreeSearch:
                 # find child states and insert into tree
                 self.node_expand(node)
                 # return the original leaf-node
-                return node
+                return node, tree_search_path
+
+            tree_search_path.append(node)
 
             previous_node = node
             if not node.gameover:
@@ -103,27 +107,31 @@ class MonteCarloTreeSearch:
 
         # Do one last evaluation (rollout/critic) of the parent of the game_over_state,
         # this way we may discover a better move than tree_policy chose
-        return previous_node
+        # also remove the gameover_node from tree_search_path
+        tree_search_path.pop(len(tree_search_path) - 1)
+        return previous_node, tree_search_path
 
     def node_expand(self, parent_node):
         self.simworld.pick_move(parent_node.state)
+        if self.simworld.get_gameover_and_reward()[0]:
+            parent_node.gameover = True
         child_states = self.simworld.get_child_states()
-        has_legal_child = False
 
         # TODO CYT: type is [Node|None], this is a fixed size array
         children = [None]*self.num_childstates
         for i in range(len(child_states)):
             # this mean the child_state is legal (for illegal children, the related position in children[] is already None)
             if child_states[i] is not None:
-                has_legal_child = True
-                node = self.make_node(child_states[i], parent_node=parent_node)
-                # attach child to our lookup-tree
-                self.tree[self.get_hashed_state(node.state)] = node
+                hash_state = self.get_hashed_state(child_states[i])
+                if hash_state in self.tree:
+                    node = self.tree[hash_state]
+                else:
+                    # attach child_node to our lookup-tree if not exists
+                    node = self.make_node(
+                        child_states[i])
+                    self.tree[hash_state] = node
                 # attach child to it's parent
                 children[i] = node
-        if not has_legal_child:
-            # ! parent_node can also be game over even though it contains legal children
-            parent_node.gameover = True
         parent_node.children = children
 
     def leaf_eval(self, epsilon):
@@ -178,7 +186,7 @@ class MonteCarloTreeSearch:
 
         return reward
 
-    def backprop(self, leaf_node, z):
+    def backprop(self, leaf_node, z, tree_search_path):
         def climb_and_update(node, node_child):
             # Upd N(s)
             node.visit += 1
@@ -192,13 +200,12 @@ class MonteCarloTreeSearch:
             node.action_value[a] = node.action_cumreward[a] / \
                 node.action_visit[a]
 
-            if node.parent:
-                climb_and_update(node.parent, node)
-        if leaf_node.parent:
-            climb_and_update(leaf_node.parent, leaf_node)
+        # TODO CYT: convert to range (top to bottom counter)
+        for parent in reversed(tree_search_path):
+            climb_and_update(parent, leaf_node)
 
-    def make_node(self, state, parent_node):
-        return Node(state, parent_node, self.num_childstates)
+    def make_node(self, state):
+        return Node(state, self.num_childstates)
 
     def get_hashed_state(self, state):
         return tuple(state)
@@ -236,7 +243,7 @@ class MonteCarloTreeSearch:
             return True
         return False
 
-    def rebuild_tree(self):
+    def prune_tree(self):
         new_tree = {}
         new_tree[self.get_hashed_state(self.root.state)] = self.root
 
@@ -257,20 +264,17 @@ class Node():
     '''
     node_representation:
         state = state
-        parent = parent node
         children = children (fixed size array)
-        action_value = monte-carlo value for action a(outgoing)
-        action_visit = visit count for action a(outgoing)
-        action_cumreward = sum of all final - state rewards this SAP has been involved in (so far)(outgoing)
-        visit = visit count for this state(node)
+        action_value = "Q(s,a)" - monte-carlo value for action a(outgoing)
+        action_visit = "N(s,a)" - visit count for action a(outgoing)
+        action_cumreward = "e_t" sum of all final - state rewards this SAP has been involved in (so far)(outgoing)
+        visit = "N(s)" -visit count for this state(node)
     '''
 
-    def __init__(self, state, parent_node, num_childstates):
+    def __init__(self, state, num_childstates):
         self.state = state
-        self.parent = parent_node
         # TODO CYT: this becomes a fixed size array of Node|None when then node is expanded
         self.children = None
-
         # TODO CYT: arrays<float> filled with zero need to be initilized with a range that sets all spots to 0 think (look it up)
         self.action_value = [0] * num_childstates
         self.action_cumreward = [0] * num_childstates
