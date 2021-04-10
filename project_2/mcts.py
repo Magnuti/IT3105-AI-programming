@@ -56,6 +56,8 @@ class MonteCarloTreeSearch:
 
         # based on all the sims, choose recommended actual_move
         children = self.root.children
+        # To do a greedy choice
+        self.explore_constant = 0
         move_num = self.tree_select_move(self.root, len(children))
 
         # Make training case for root_node
@@ -201,8 +203,11 @@ class MonteCarloTreeSearch:
                 node.action_visit[a]
 
         # TODO CYT: convert to range (top to bottom counter)
-        for parent in reversed(tree_search_path):
-            climb_and_update(parent, leaf_node)
+        tree_search_path.reverse()
+        child = leaf_node
+        for parent_node in tree_search_path:
+            climb_and_update(parent_node, child)
+            child = parent_node
 
     def make_node(self, state):
         return Node(state, self.num_childstates)
