@@ -254,10 +254,12 @@ class MonteCarloTreeSearch:
 
         def add_children(node):
             tree = {}
-            for child in node.children:
-                tree[self.get_hashed_state(child)] = child
-                # Merge the two dicts
-                tree.update(add_children(child))
+            if node.children:
+                for child in node.children:
+                    if child is not None:
+                        tree[self.get_hashed_state(child.state)] = child
+                        # Merge the two dicts
+                        tree.update(add_children(child))
             return tree
 
         # Merge the two dicts
