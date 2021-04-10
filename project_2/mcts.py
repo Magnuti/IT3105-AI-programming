@@ -41,12 +41,11 @@ class MonteCarloTreeSearch:
         if not self.root:
             self.root = self.make_node(self.simworld.get_game_state(), None)
             self.tree[self.get_hashed_state(self.root.state)] = self.root
-        # TODO ! this whole elif-block can be deleted when progressing to HEX games (NIM can't prune the tree)
-        elif self.gametype == GameType.NIM:
+        else:
             self.root = self.tree[self.get_hashed_state(
                 self.simworld.get_game_state())]
-        else:
-            self.root = self.prune_tree(self.simworld.get_game_state())
+            # Remove unused states from self.tree
+            self.rebuild_tree()
 
         # Run simulations
         for _ in range(self.simulations):
@@ -237,32 +236,21 @@ class MonteCarloTreeSearch:
             return True
         return False
 
-    def prune_tree(self, root_state):
-        hash_state = self.get_hashed_state(root_state)
-        # This is our new root_node, we want to prune all that exists above this
-        new_root_node = self.tree[hash_state]
+    def rebuild_tree(self):
+        new_tree = {}
+        new_tree[self.get_hashed_state(self.root.state)] = self.root
 
-        def dive_and_burn(node):
-            if not node.gameover and node.children is not None:
-                for child in range(len(node.children)):
-                    # burning all legal children
-                    if node.children[child]:
-                        dive_and_burn(node.children[child])
-            self.tree.pop(self.get_hashed_state(node.state))
-            node.children = None
+        def add_children(node):
+            tree = {}
+            for child in node.children:
+                tree[self.get_hashed_state(child)] = child
+                # Merge the two dicts
+                tree.update(add_children(child))
+            return tree
 
-        # detach this new root_node from it's parent
-        a = new_root_node.parent.children.index(new_root_node)
-        new_root_node.parent.children[a] = None
-
-        real_root = new_root_node.parent
-
-        while real_root.parent:
-            real_root = real_root.parent
-        dive_and_burn(real_root)
-
-        new_root_node.parent = None
-        return new_root_node
+        # Merge the two dicts
+        new_tree.update(add_children(self.root))
+        self.tree = new_tree
 
 
 class Node():
