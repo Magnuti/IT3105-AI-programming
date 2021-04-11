@@ -153,6 +153,8 @@ class SimWorldHex(SimWorldInterface):
         # Each player has a list of disjoint sets. When A and B are in the
         # same set we have a winner.
 
+        self.gameover_and_reward_cache = {}
+
     def reset_game(self, starting_player):
         super().reset_game(starting_player)
         # Each cell is represented as two bits [0, 0] = empty, [1, 0] = filled by
@@ -268,6 +270,7 @@ class SimWorldHex(SimWorldInterface):
             f"index '{index}' is not within the bounds given by board_size")
 
     def get_child_states(self):
+        # TODO try to make a child_state cache as well and see if the performance is increased
         """
         Returns a list of size board_size ** 2 + 2 of all possible states where
             the child states are not None. The first two elements represent the
@@ -305,6 +308,12 @@ class SimWorldHex(SimWorldInterface):
         return child_states
 
     def get_gameover_and_reward(self):
+        # Game over does not depend of whose player's turn it is
+        hashable_state = tuple(self.state)
+
+        if hashable_state in self.gameover_and_reward_cache:
+            return self.gameover_and_reward_cache[hashable_state]
+
         # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
         player_0_cells = {"R1", "R2"}
         player_1_cells = {"B1", "B2"}
@@ -362,7 +371,9 @@ class SimWorldHex(SimWorldInterface):
         # # TODO only do this if visualize is set to true or something like that
         self.__update_graph_statuses(game_over)
 
-        return game_over, reward
+        self.gameover_and_reward_cache[hashable_state] = (game_over, reward)
+
+        return self.gameover_and_reward_cache[hashable_state]
 
     def __update_graph_statuses(self, game_over=False):
         for i in range(0, len(self.state), 2):
