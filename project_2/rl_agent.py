@@ -13,12 +13,13 @@ class RL_agent:
     This class houses the actor (and the critic, if we are using one).
     """
 
-    def __init__(self, sim_world, args, model_save_path):
+    def __init__(self, sim_world, args, model_save_path, best_model_save_path):
         self.sim_world = sim_world
         # The reason I set this as its own attribute is that it's changed during the runs
         self.epsilon = args.epsilon  # Decays over time
         self.args = args
         self.model_save_path = model_save_path
+        self.best_model_save_path = best_model_save_path
 
         if args.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
             self.epsilon_decay = self.epsilon / self.args.episodes  # Linear decay
@@ -31,15 +32,28 @@ class RL_agent:
         # TODO Think it's helpful to just plot this to see how it's manifesting
         epsilon_history = []
 
+        starting_player = 0
+        self.sim_world.reset_game(starting_player)
+
         episode_save = self.args.episodes // (self.args.games_to_save - 1)
-        print("Saving every {}th episode".format(episode_save))
+        episode_save_interval = [
+            i * episode_save for i in range(self.args.games_to_save)]
+
+        # Deals with non-dividible numbers
+        episode_save_interval[-1] = self.args.episodes - 1
+        print("Saving every {}th episode".format(episode_save_interval))
+
         for episode in range(self.args.episodes):
             last_episode = episode == self.args.episodes - 1
-            if(episode % 100 == 0 or last_episode):
+            if(episode % 50 == 0 or last_episode):
                 print("--- Episode {} ---".format(episode))
-            if episode % episode_save == 0 or last_episode:
+            if episode in episode_save_interval:
                 print("Saving episode", episode)
                 self.actor.ANET.save_model(episode, self.model_save_path)
+
+                if last_episode:
+                    self.actor.ANET.save_model(
+                        "best_model", self.best_model_save_path)
 
             # self.critic.new_episode()
             # TODO is this needed ?
@@ -63,8 +77,6 @@ class RL_agent:
             # TODO: (?) need child_states with visualization like in project 1
             # self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
             # self.child_states = self.sim_world.get_child_states()
-
-            # ! TODO Reset MCTS tree for the new actual-game-episode
 
             # First action
             # TODO epsilon handled correctly in actor?
@@ -91,10 +103,15 @@ class RL_agent:
                 #     # time.sleep(self.args.frame_time)
                 #     pass
 
+            self.actor.start_new_game()
+
             epsilon_history.append(self.epsilon)
 
             if not last_episode:
-                self.sim_world.reset_game()
+                starting_player = 1 - starting_player  # Alternate between 0 and 1
+                self.sim_world.reset_game(starting_player)
+
+                # ? Why should we not train the ANET on the last episode?
                 self.actor.train_ANET()
 
 
@@ -117,6 +134,9 @@ class Actor:
         next_state, train_case = self.MCTS.search_next_actual_move(epsilon)
         self.replay_buffer.append(train_case)
         self.sim_world.pick_move(next_state)
+
+    def start_new_game(self):
+        self.MCTS.start_new_game()
 
     def train_ANET(self, plot=False):
         if len(self.replay_buffer) <= self.args.replay_buffer_selection_size:

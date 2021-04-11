@@ -22,11 +22,8 @@ class SimWorldInterface:
     and recognizing final states and the winning player
     """
 
-    def __init__(self):
-        self.reset_game()
-
-    def reset_game(self):
-        raise NotImplementedError()
+    def reset_game(self, starting_player):
+        self.current_player = self.player_id_to_array(starting_player)
 
     def get_game_state(self):
         """
@@ -86,10 +83,9 @@ class SimWorldNim(SimWorldInterface):
         """
         self.N = N
         self.K = K
-        super().__init__()
 
-    def reset_game(self):
-        self.current_player = self.player_id_to_array(0)
+    def reset_game(self, starting_player):
+        super().reset_game(starting_player)
         # +1 because we must include the zero piece
         self.state = np.zeros(self.N + 1, dtype=int)
         self.state[-1] = 1
@@ -156,10 +152,9 @@ class SimWorldHex(SimWorldInterface):
             self.board_size)
         # Each player has a list of disjoint sets. When A and B are in the
         # same set we have a winner.
-        super().__init__()
 
-    def reset_game(self):
-        self.current_player = self.player_id_to_array(0)
+    def reset_game(self, starting_player):
+        super().reset_game(starting_player)
         # Each cell is represented as two bits [0, 0] = empty, [1, 0] = filled by
         # player 0, and [0, 1] = filled by player 1
         self.state = np.zeros(self.board_size ** 2 * 2, dtype=int)
@@ -398,6 +393,7 @@ class SimWorldHex(SimWorldInterface):
 if __name__ == "__main__":
     # sim_world = SimWorldNim(10, 5)
     sim_world = SimWorldHex(10)
+    sim_world.reset_game(0)
 
     gameover, reward = sim_world.get_gameover_and_reward()
     while not gameover:

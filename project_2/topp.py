@@ -34,19 +34,35 @@ class TournamentOfProgressivePolicies:
             anets[path.name] = anet
             victories_per_anet[path.name] = 0
 
+        played_matches = set()
         for anet_0_name, anet_0 in anets.items():
             for anet_1_name, anet_1 in anets.items():
                 if anet_0_name == anet_1_name:
                     continue
 
+                match_id_1 = (anet_0_name, anet_1_name)
+                match_id_2 = (anet_1_name, anet_0_name)
+
+                if match_id_1 in played_matches or match_id_2 in played_matches:
+                    # Skip mathces that have already been played between agents
+                    continue
+
+                played_matches.add(match_id_1)
+                played_matches.add(match_id_2)
+
+                starting_player = 1
                 for game in range(games_between_agents):
+                    # print("\nPlaying a game between {} and {}".format(
+                    # anet_0_name, anet_1_name))
+                    starting_player = 1 - starting_player  # Alternate between 0 and 1
                     # Play a game between model_0 and model_1
-                    self.sim_world.reset_game()
+                    self.sim_world.reset_game(starting_player)
 
                     gameover, reward = self.sim_world.get_gameover_and_reward()
                     while not gameover:
                         # Batch size is 1 so we get the output by indexing [0]
 
+                        # TODO try to alternate who is player 0 and 1 between the ANETs as well
                         if self.sim_world.current_player_array_to_id():
                             # Player 1's turn
                             output_propabilities = anet_1.forward(
@@ -72,9 +88,9 @@ class TournamentOfProgressivePolicies:
 
                         gameover, reward = self.sim_world.get_gameover_and_reward()
 
-                        # visualize_board(sim_world.graph, list(
-                        # map(lambda x: x.status, sim_world.cells)), 0)
-                        # sim_world.print_current_game_state()
+                        # visualize_board(self.sim_world.graph, list(
+                        #     map(lambda x: x.status, self.sim_world.cells)), 0)
+                        # self.sim_world.print_current_game_state()
 
                     if reward == 1:
                         victories_per_anet[anet_1_name] += 1
@@ -83,8 +99,8 @@ class TournamentOfProgressivePolicies:
                         # print("Red (player 0, player 1 in project spec) wins")
                         victories_per_anet[anet_0_name] += 1
 
-                    # visualize_board(sim_world.graph, list(
-                    # map(lambda x: x.status, sim_world.cells)), 0)
+                    # visualize_board(self.sim_world.graph, list(
+                    #     map(lambda x: x.status, self.sim_world.cells)), 0)
                     # keep_board_visualization_visible()
 
         for key, value in victories_per_anet.items():

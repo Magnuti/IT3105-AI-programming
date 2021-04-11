@@ -1,8 +1,6 @@
 import numpy as np
 import random
 import math
-# ! Remove all traces of GameType, MCTS should not know what game is is playing
-from constants import GameType
 
 
 # TODO CYT: would it make sense to inherit from Node-class, so this class understands the node-attribs? (if that's how inheritance even works)
@@ -26,9 +24,12 @@ class MonteCarloTreeSearch:
         self.ANET = ANET
         self.num_childstates = args.neurons_per_layer[len(
             args.neurons_per_layer) - 1]
+
+        self.start_new_game()
+
+    def start_new_game(self):
         self.root = None
         self.tree = {}
-        self.gametype = args.game_type
 
     def search_next_actual_move(self, epsilon):
         """

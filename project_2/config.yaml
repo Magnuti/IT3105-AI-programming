@@ -3,13 +3,13 @@
 ######################################################
 
 # The type of game to be played [nim, hex]
-game_type: hex
+game_type: nim
 
-episodes: 200
+episodes: 250
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
-simulations: 200
+simulations: 500
 
 epsilon: 1
 
@@ -18,6 +18,8 @@ epsilon_decay_function: exponential
 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
 # Only used for epsilon_decay_function: exponential
 epsilon_decay: 0.9955
+
+# TODO add visualization param and visualizaiton frame time param
 
 ######################################################
 ### Nim variables ###
