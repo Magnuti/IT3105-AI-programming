@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 
-from visualization import visualize_board, keep_board_visualization_visible
+from visualization import visualize_board_manually
 from sim_world import SimWorldNim, SimWorldHex
 from argument_parser import Arguments
 from function_approximator import ANET
@@ -83,11 +83,13 @@ class TournamentOfProgressivePolicies:
                         output_propabilities /= sum(output_propabilities)
 
                         # Make greedy choice
+                        # TODO add some randomness so the result is not deterministic
                         move_index = np.argmax(output_propabilities)
                         self.sim_world.pick_move(child_states[move_index])
 
                         gameover, reward = self.sim_world.get_gameover_and_reward()
 
+                        # TODO fix viz manually
                         # visualize_board(self.sim_world.graph, list(
                         #     map(lambda x: x.status, self.sim_world.cells)), 0)
                         # self.sim_world.print_current_game_state()

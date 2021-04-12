@@ -1,7 +1,7 @@
 import numpy as np
 import networkx as nx
 
-from visualization import visualize_board, keep_board_visualization_visible
+from visualization import visualize_board_manually
 from constants import BoardCell
 from disjoint_set import DisjointSet
 
@@ -155,6 +155,7 @@ class SimWorldHex(SimWorldInterface):
         # Each player has a list of disjoint sets. When A and B are in the
         # same set we have a winner.
 
+        self.child_states_cache = {}
         self.gameover_and_reward_cache = {}
 
     def reset_game(self, starting_player):
@@ -272,7 +273,6 @@ class SimWorldHex(SimWorldInterface):
             f"index '{index}' is not within the bounds given by board_size")
 
     def get_child_states(self):
-        # TODO try to make a child_state cache as well and see if the performance is increased
         """
         Returns a list of size board_size ** 2 + 2 of all possible states where
             the child states are not None. The first two elements represent the
@@ -284,6 +284,11 @@ class SimWorldHex(SimWorldInterface):
             We see that we can place the value 10 in two locations: [2:4] and
             [4:6], since the current player is 10
         """
+        hashable_state = tuple(self.get_game_state())
+
+        if hashable_state in self.child_states_cache:
+            return self.child_states_cache[hashable_state]
+
         child_states = []
         for i in range(0, len(self.state), 2):
             if np.array_equal(self.state[i: i + 2], np.array([0, 0], dtype=int)):
@@ -307,14 +312,19 @@ class SimWorldHex(SimWorldInterface):
 
             child_states.append(child_state)
 
-        return child_states
+        self.child_states_cache[hashable_state] = child_states
+
+        return self.child_states_cache[hashable_state]
 
     def get_gameover_and_reward(self):
         # Game over does not depend of whose player's turn it is
         hashable_state = tuple(self.state)
 
         if hashable_state in self.gameover_and_reward_cache:
-            return self.gameover_and_reward_cache[hashable_state]
+            # # TODO only do this if visualize is set to true or something like that
+            game_over, reward = self.gameover_and_reward_cache[hashable_state]
+            self.__update_graph_statuses(game_over)
+            return game_over, reward
 
         # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
         player_0_cells = {"R1", "R2"}
@@ -405,34 +415,39 @@ class SimWorldHex(SimWorldInterface):
 
 if __name__ == "__main__":
     # sim_world = SimWorldNim(10, 5)
-    sim_world = SimWorldHex(10)
-    sim_world.reset_game(0)
+    sim_world = SimWorldHex(4)
+    starting_player = 0
+    for i in range(10):
+        starting_player = 1 - starting_player
+        sim_world.reset_game(starting_player)
 
-    gameover, reward = sim_world.get_gameover_and_reward()
-    while not gameover:
-        # sim_world.print_current_game_state()
-        child_states = sim_world.get_child_states()
-        legal_child_states = []
-        for i in range(len(child_states)):
-            if child_states[i] is not None:
-                legal_child_states.append(child_states[i])
+        graph_list = []
+        state_status_list_list = []
 
-        # For simplicity we just select a random legal action here
-        legal_action_index = np.random.randint(0, len(legal_child_states))
-        next_state = legal_child_states[legal_action_index]
-
-        sim_world.pick_move(next_state)
         gameover, reward = sim_world.get_gameover_and_reward()
+        while not gameover:
+            # sim_world.print_current_game_state()
+            child_states = sim_world.get_child_states()
+            legal_child_states = []
+            for i in range(len(child_states)):
+                if child_states[i] is not None:
+                    legal_child_states.append(child_states[i])
 
-        visualize_board(sim_world.graph, list(
-            map(lambda x: x.status, sim_world.cells)), 0)
+            # For simplicity we just select a random legal action here
+            legal_action_index = np.random.randint(0, len(legal_child_states))
+            next_state = legal_child_states[legal_action_index]
 
-    # sim_world.print_current_game_state()
-    if reward == 1:
-        print("Black (player 1, player 2 in project spec) wins")
-    else:
-        print("Red (player 0, player 1 in project spec) wins")
+            sim_world.pick_move(next_state)
+            gameover, reward = sim_world.get_gameover_and_reward()
 
-    visualize_board(sim_world.graph, list(
-        map(lambda x: x.status, sim_world.cells)), 0)
-    keep_board_visualization_visible()
+            graph_list.append(sim_world.graph)
+            state_status_list_list.append(
+                list(map(lambda x: x.status, sim_world.cells)))
+
+        # sim_world.print_current_game_state()
+        if reward == 1:
+            print("Black (player 1, player 2 in project spec) wins")
+        else:
+            print("Red (player 0, player 1 in project spec) wins")
+
+        visualize_board_manually(graph_list, state_status_list_list)
