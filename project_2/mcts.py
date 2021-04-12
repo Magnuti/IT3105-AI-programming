@@ -3,7 +3,6 @@ import random
 import math
 
 
-# TODO CYT: would it make sense to inherit from Node-class, so this class understands the node-attribs? (if that's how inheritance even works)
 class MonteCarloTreeSearch:
     '''
     tree_representation
@@ -38,8 +37,8 @@ class MonteCarloTreeSearch:
             train_case: tuple with root state and target distribution which is
             to be added into the replay buffer.
         """
-        # TODO This whole block should be removed, MSTC should not know what game it is playing
         if not self.root:
+            # This only happens at beginning of an episode, when the tree is empty and the root is not set
             self.root = self.make_node(self.simworld.get_game_state())
             self.tree[self.get_hashed_state(self.root.state)] = self.root
         else:
@@ -55,16 +54,14 @@ class MonteCarloTreeSearch:
         # reset simworld to the root_state (actual_state before search)
         self.simworld.pick_move(self.root.state)
 
-        # based on all the sims, choose recommended actual_move
+        # Based on all the simulations, choose recommended actual_move
         children = self.root.children
         # To do a greedy choice
         self.explore_constant = 0
         move_num = self.tree_select_move(self.root, len(children))
 
         # Make training case for root_node
-        # TODO CYT, may need to drop np if cythonizing this func
-        target_dist = np.array([self.root.action_visit[a]
-                                for a in range(len(children))], dtype=np.float32)
+        target_dist = np.array(self.root.action_visit, dtype=float)
         target_norm = np.sum(target_dist)
         target_dist /= target_norm
 
@@ -190,25 +187,21 @@ class MonteCarloTreeSearch:
         return reward
 
     def backprop(self, leaf_node, z, tree_search_path):
-        def climb_and_update(node, node_child):
-            # Upd N(s)
-            node.visit += 1
-            # which action/child we climbed up from <int>
-            a = node.children.index(node_child)
-            # Upd N(s,a), E, Q(s, a)
+        child_node = leaf_node
+        for parent_node in reversed(tree_search_path):
+            # Update N(s)
+            parent_node.visit += 1
+
+            a = parent_node.children.index(child_node)  # Action index
+
+            # Update N(s,a), E, Q(s, a)
             # E_a is accumulated reward for action (over all searches in this tree)
+            parent_node.action_visit[a] += 1
+            parent_node.action_cumreward[a] += z
+            parent_node.action_value[a] = parent_node.action_cumreward[a] / \
+                parent_node.action_visit[a]
 
-            node.action_visit[a] += 1
-            node.action_cumreward[a] += z
-            node.action_value[a] = node.action_cumreward[a] / \
-                node.action_visit[a]
-
-        # TODO CYT: convert to range (top to bottom counter)
-        tree_search_path.reverse()
-        child = leaf_node
-        for parent_node in tree_search_path:
-            climb_and_update(parent_node, child)
-            child = parent_node
+            child_node = parent_node
 
     def make_node(self, state):
         return Node(state, self.num_childstates)
@@ -224,22 +217,26 @@ class MonteCarloTreeSearch:
             values = []
             # TODO CYT: not sure how math.inf translates to Cython
             for a in range(num_child_states):
-                if not node.children[a]:
+                if node.children[a] is None:
                     values.append(-math.inf)
                     continue
-                values.append(node.action_value[a] + self.explore_constant *
-                              math.sqrt(math.log(node.visit) / node.action_visit[a]))
+                utc = self.explore_constant * \
+                    math.sqrt(math.log(node.visit) /
+                              (1 + node.action_visit[a]))
+                values.append(node.action_value[a] + utc)
             action_chosen = values.index(max(values))
         else:
             # get best-action for player 0
             values = []
             for a in range(num_child_states):
-                if not node.children[a]:
+                if node.children[a] is None:  # TODO rewrite to is None
                     values.append(math.inf)
                     continue
 
-                values.append(node.action_value[a] - self.explore_constant *
-                              math.sqrt(math.log(node.visit) / node.action_visit[a]))
+                utc = self.explore_constant * \
+                    math.sqrt(math.log(node.visit) /
+                              (1 + node.action_visit[a]))
+                values.append(node.action_value[a] - utc)
             action_chosen = values.index(min(values))
         return action_chosen
 
@@ -286,8 +283,7 @@ class Node():
         # TODO CYT: arrays<float> filled with zero need to be initilized with a range that sets all spots to 0 think (look it up)
         self.action_value = [0] * num_childstates
         self.action_cumreward = [0] * num_childstates
-        # initialized with 1 so we don't divide by 0
-        self.action_visit = [1] * num_childstates
+        self.action_visit = [0] * num_childstates
         self.visit = 1
         self.gameover = False
 
