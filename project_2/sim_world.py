@@ -14,6 +14,9 @@ The project specification uses player 1 and 2, so we just increment them.
 For the Hex game, player 0 is red, while player 1 is black
 """
 
+player_id_0 = np.array([1, 0], dtype=int)
+player_id_1 = np.array([0, 1], dtype=int)
+
 
 class SimWorldInterface:
     """
@@ -23,7 +26,7 @@ class SimWorldInterface:
     """
 
     def reset_game(self, starting_player):
-        self.current_player = self.player_id_to_array(starting_player)
+        self.current_player = self.__player_id_to_array(starting_player)
 
     def get_game_state(self):
         """
@@ -42,19 +45,18 @@ class SimWorldInterface:
         raise NotImplementedError()
 
     def current_player_array_to_id(self):
-        if np.array_equal(self.current_player, np.array([0, 1], dtype=int)):
+        if np.array_equal(self.current_player, player_id_1):
             return 1
-        elif np.array_equal(self.current_player, np.array([1, 0], dtype=int)):
+        elif np.array_equal(self.current_player, player_id_0):
             return 0
         else:
             raise ValueError("Illegal player:", self.current_player)
 
-    # TODO some of these calls should be made into constant since they don't change
-    def player_id_to_array(self, player_id):
+    def __player_id_to_array(self, player_id):
         if player_id == 0:
-            return np.array([1, 0], dtype=int)
+            return player_id_0
         elif player_id == 1:
-            return np.array([0, 1], dtype=int)
+            return player_id_1
         else:
             raise ValueError("Illegal player:", player_id)
 
@@ -294,10 +296,10 @@ class SimWorldHex(SimWorldInterface):
                 child_state[:2] = np.roll(self.current_player, 1)
                 child_state[2:] = self.state
                 child_state[2 + i: 4 + i] = self.current_player
-            elif np.array_equal(self.state[i: i + 2], self.player_id_to_array(0)):
+            elif np.array_equal(self.state[i: i + 2], player_id_0):
                 # Player 0's cell
                 child_state = None
-            elif np.array_equal(self.state[i: i + 2], self.player_id_to_array(1)):
+            elif np.array_equal(self.state[i: i + 2], player_id_1):
                 # Player 1's cell
                 child_state = None
             else:
@@ -325,10 +327,10 @@ class SimWorldHex(SimWorldInterface):
             if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
                 # Empty cell
                 continue
-            elif np.array_equal(cell_state, self.player_id_to_array(0)):
+            elif np.array_equal(cell_state, player_id_0):
                 # Player 0's cell
                 player_0_cells.add(cell_index)
-            elif np.array_equal(cell_state, self.player_id_to_array(1)):
+            elif np.array_equal(cell_state, player_id_1):
                 # Player 1's cell
                 player_1_cells.add(cell_index)
             else:
@@ -383,13 +385,13 @@ class SimWorldHex(SimWorldInterface):
                 # Empty cell
                 status = BoardCell.EMPTY_CELL
 
-            elif np.array_equal(cell_state, self.player_id_to_array(0)):
+            elif np.array_equal(cell_state, player_id_0):
                 # Player 0's cell
                 if cell_index in self.winner_set and game_over:
                     status = BoardCell.PLAYER_0_CELL_PART_OF_WINNING_PATH
                 else:
                     status = BoardCell.PLAYER_0_CELL
-            elif np.array_equal(cell_state, self.player_id_to_array(1)):
+            elif np.array_equal(cell_state, player_id_1):
                 # Player 1's cell
                 if cell_index in self.winner_set and game_over:
                     status = BoardCell.PLAYER_1_CELL_PART_OF_WINNING_PATH
