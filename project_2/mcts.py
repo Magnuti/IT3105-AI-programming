@@ -49,10 +49,14 @@ class MonteCarloTreeSearch:
 
         # Run simulations
         for _ in range(self.simulations):
-            self.simulate(epsilon)
+            leaf_node, tree_search_path = self.tree_search()
+            self.simworld.pick_move(leaf_node.state)
+            z = self.leaf_eval(epsilon)
+            if len(tree_search_path):
+                self.backprop(leaf_node, z, tree_search_path)
 
-        # reset simworld to the root_state (actual_state before search)
-        self.simworld.pick_move(self.root.state)
+            # Reset simworld to the root state before the simulation started
+            self.simworld.pick_move(self.root.state)
 
         # Based on all the simulations, choose recommended actual_move
         children = self.root.children
@@ -66,14 +70,6 @@ class MonteCarloTreeSearch:
         target_dist /= target_norm
 
         return children[move_num].state, (self.root.state, target_dist)
-
-    def simulate(self, epsilon):
-        self.simworld.pick_move(self.root.state)
-        leaf_node, tree_search_path = self.tree_search()
-        self.simworld.pick_move(leaf_node.state)
-        z = self.leaf_eval(epsilon)
-        if len(tree_search_path):
-            self.backprop(leaf_node, z, tree_search_path)
 
     # using UCT algorithm
     def tree_search(self):
@@ -111,10 +107,47 @@ class MonteCarloTreeSearch:
         tree_search_path.pop(len(tree_search_path) - 1)
         return previous_node, tree_search_path
 
+    def tree_select_move(self, node, num_child_states):
+        if self.black_to_play(node):
+            # Get the greedy best-action coice for player 1
+            # the math here would be better to do in np, but need to be explicit to be able to cythonize
+            values = []
+            # TODO CYT: not sure how math.inf translates to Cython
+            for a in range(num_child_states):
+                if node.children[a] is None:
+                    values.append(-math.inf)
+                    continue
+                utc = self.explore_constant * \
+                    math.sqrt(math.log(node.visit) /
+                              (1 + node.action_visit[a]))
+                values.append(node.action_value[a] + utc)
+            action_chosen = values.index(max(values))
+        else:
+            # get best-action for player 0
+            values = []
+            for a in range(num_child_states):
+                if node.children[a] is None:
+                    values.append(math.inf)
+                    continue
+
+                utc = self.explore_constant * \
+                    math.sqrt(math.log(node.visit) /
+                              (1 + node.action_visit[a]))
+                values.append(node.action_value[a] - utc)
+            action_chosen = values.index(min(values))
+
+        return action_chosen
+
     def node_expand(self, parent_node):
+        """
+        Expands the children of a given node.
+        """
         self.simworld.pick_move(parent_node.state)
         if self.simworld.get_gameover_and_reward()[0]:
             parent_node.gameover = True
+            # No need to find the children of a game over state
+            return
+
         child_states = self.simworld.get_child_states()
 
         # TODO CYT: type is [Node|None], this is a fixed size array
@@ -127,11 +160,11 @@ class MonteCarloTreeSearch:
                     node = self.tree[hash_state]
                 else:
                     # attach child_node to our lookup-tree if not exists
-                    node = self.make_node(
-                        child_states[i])
+                    node = self.make_node(child_states[i])
                     self.tree[hash_state] = node
                 # attach child to it's parent
                 children[i] = node
+
         parent_node.children = children
 
     def leaf_eval(self, epsilon):
@@ -208,37 +241,6 @@ class MonteCarloTreeSearch:
 
     def get_hashed_state(self, state):
         return tuple(state)
-
-    # TODO: be ready to explain this on demo!
-    def tree_select_move(self, node, num_child_states):
-        if self.black_to_play(node):
-            # Get the greedy best-action coice for player 1
-            # the math here would be better to do in np, but need to be explicit to be able to cythonize
-            values = []
-            # TODO CYT: not sure how math.inf translates to Cython
-            for a in range(num_child_states):
-                if node.children[a] is None:
-                    values.append(-math.inf)
-                    continue
-                utc = self.explore_constant * \
-                    math.sqrt(math.log(node.visit) /
-                              (1 + node.action_visit[a]))
-                values.append(node.action_value[a] + utc)
-            action_chosen = values.index(max(values))
-        else:
-            # get best-action for player 0
-            values = []
-            for a in range(num_child_states):
-                if node.children[a] is None:  # TODO rewrite to is None
-                    values.append(math.inf)
-                    continue
-
-                utc = self.explore_constant * \
-                    math.sqrt(math.log(node.visit) /
-                              (1 + node.action_visit[a]))
-                values.append(node.action_value[a] - utc)
-            action_chosen = values.index(min(values))
-        return action_chosen
 
     def black_to_play(self, node):
         # Differences between player ID [0, 1] and [1, 0]
