@@ -41,7 +41,7 @@ class SimWorldInterface:
         self.current_player = next_player_and_next_state[:2]
         self.state = next_player_and_next_state[2:]
 
-    def get_gameover_and_reward(self):
+    def get_gameover_and_reward(self, visualization=False):
         raise NotImplementedError()
 
     def current_player_array_to_id(self):
@@ -113,7 +113,7 @@ class SimWorldNim(SimWorldInterface):
 
         return child_states
 
-    def get_gameover_and_reward(self):
+    def get_gameover_and_reward(self, visualization=False):
         if self.__get_remaining_pieces() > 0:
             return False, 0
 
@@ -158,6 +158,7 @@ class SimWorldHex(SimWorldInterface):
 
         self.child_states_cache = {}
         self.gameover_and_reward_cache = {}
+        self.winner_set_cache = {}
 
     def reset_game(self, starting_player):
         super().reset_game(starting_player)
@@ -317,14 +318,16 @@ class SimWorldHex(SimWorldInterface):
 
         return self.child_states_cache[hashable_state]
 
-    def get_gameover_and_reward(self):
+    def get_gameover_and_reward(self, visualization=False):
         # Game over does not depend of whose player's turn it is
         hashable_state = tuple(self.state)
 
         if hashable_state in self.gameover_and_reward_cache:
             game_over, reward = self.gameover_and_reward_cache[hashable_state]
-            if self.visualize:
+            if self.visualize and visualization:
                 # We only need to update the graph when visualize is on to
+                if hashable_state in self.winner_set_cache:
+                    self.winner_set = self.winner_set_cache[hashable_state]
                 self.__update_graph_statuses(game_over)
             return game_over, reward
 
@@ -365,6 +368,7 @@ class SimWorldHex(SimWorldInterface):
         if disjoint_set_player_0.find("R1") == disjoint_set_player_0.find("R2"):
             # Red wins, player 0
             self.winner_set = player_0_cells
+            self.winner_set_cache[hashable_state] = player_0_cells
             game_over = True
             reward = -1
 
@@ -379,11 +383,12 @@ class SimWorldHex(SimWorldInterface):
         if disjoint_set_player_1.find("B1") == disjoint_set_player_1.find("B2"):
             # Black wins, player 1
             self.winner_set = player_1_cells
+            self.winner_set_cache[hashable_state] = player_1_cells
             game_over = True
             reward = 1
 
-        if self.visualize:
-            # We only need to update the graph when visualize is on to
+        if self.visualize and visualization:
+            # We only need to update the graph when visualize is on
             self.__update_graph_statuses(game_over)
 
         self.gameover_and_reward_cache[hashable_state] = (game_over, reward)
@@ -428,7 +433,8 @@ if __name__ == "__main__":
         graph_list = []
         state_status_list_list = []
 
-        gameover, reward = sim_world.get_gameover_and_reward()
+        gameover, reward = sim_world.get_gameover_and_reward(
+            visualization=True)
         while not gameover:
             # sim_world.print_current_game_state()
             child_states = sim_world.get_child_states()
@@ -442,7 +448,8 @@ if __name__ == "__main__":
             next_state = legal_child_states[legal_action_index]
 
             sim_world.pick_move(next_state)
-            gameover, reward = sim_world.get_gameover_and_reward()
+            gameover, reward = sim_world.get_gameover_and_reward(
+                visualization=True)
 
             graph_list.append(sim_world.graph)
             state_status_list_list.append(

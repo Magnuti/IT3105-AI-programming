@@ -49,7 +49,8 @@ if __name__ == "__main__":
     anet.load_model_path_known(
         best_model_save_path.joinpath("anet_episode_best_model"))
 
-    frame_time = 0.1
+    # TODO try best_vs_random on nim as well, may be far easier to see that
+
     games = 100
     starting_player = 1
     print("Our ANET player is black")
@@ -60,7 +61,8 @@ if __name__ == "__main__":
         graph_list = []
         state_status_list_list = []
 
-        gameover, reward = sim_world.get_gameover_and_reward()
+        gameover, reward = sim_world.get_gameover_and_reward(
+            visualization=True)
         move_count = 0
         while not gameover:
             move_count += 1
@@ -96,7 +98,8 @@ if __name__ == "__main__":
                 next_state = legal_child_states[legal_action_index]
                 sim_world.pick_move(next_state)
 
-            gameover, reward = sim_world.get_gameover_and_reward()
+            gameover, reward = sim_world.get_gameover_and_reward(
+                visualization=True)
 
             graph_list.append(sim_world.graph)
             state_status_list_list.append(

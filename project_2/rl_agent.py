@@ -84,7 +84,8 @@ class RL_agent:
             # TODO epsilon handled correctly in actor?
             self.actor.pick_next_actual_action(self.epsilon)
 
-            gameover = self.sim_world.get_gameover_and_reward()[0]
+            gameover = self.sim_world.get_gameover_and_reward(
+                visualization=last_episode)[0]
 
             # For each step of the episode: do another move
             while not gameover:
@@ -96,7 +97,8 @@ class RL_agent:
 
                 self.actor.pick_next_actual_action(self.epsilon)
                 # TODO should reward be fetched here too?
-                gameover, reward = self.sim_world.get_gameover_and_reward()
+                gameover, reward = self.sim_world.get_gameover_and_reward(
+                    visualization=last_episode)
 
                 # # visualize current episode if it's in visualize_training_episodes or last episode
                 # if (self.args.visualize and (episode in self.args.visualize_training_episodes or last_episode)):
