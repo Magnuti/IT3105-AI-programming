@@ -144,7 +144,7 @@ class SimWorldHex(SimWorldInterface):
             self.neighbor_indices = []
             self.pos = pos
 
-    def __init__(self, board_size):
+    def __init__(self, board_size, visualize):
         """
         Args
             board_size: int
@@ -154,6 +154,7 @@ class SimWorldHex(SimWorldInterface):
             self.board_size)
         # Each player has a list of disjoint sets. When A and B are in the
         # same set we have a winner.
+        self.visualize = visualize
 
         self.child_states_cache = {}
         self.gameover_and_reward_cache = {}
@@ -321,9 +322,10 @@ class SimWorldHex(SimWorldInterface):
         hashable_state = tuple(self.state)
 
         if hashable_state in self.gameover_and_reward_cache:
-            # # TODO only do this if visualize is set to true or something like that
             game_over, reward = self.gameover_and_reward_cache[hashable_state]
-            self.__update_graph_statuses(game_over)
+            if self.visualize:
+                # We only need to update the graph when visualize is on to
+                self.__update_graph_statuses(game_over)
             return game_over, reward
 
         # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
@@ -380,8 +382,9 @@ class SimWorldHex(SimWorldInterface):
             game_over = True
             reward = 1
 
-        # # TODO only do this if visualize is set to true or something like that
-        self.__update_graph_statuses(game_over)
+        if self.visualize:
+            # We only need to update the graph when visualize is on to
+            self.__update_graph_statuses(game_over)
 
         self.gameover_and_reward_cache[hashable_state] = (game_over, reward)
 
@@ -415,7 +418,8 @@ class SimWorldHex(SimWorldInterface):
 
 if __name__ == "__main__":
     # sim_world = SimWorldNim(10, 5)
-    sim_world = SimWorldHex(4)
+    visualize = True
+    sim_world = SimWorldHex(4, visualize)
     starting_player = 0
     for i in range(10):
         starting_player = 1 - starting_player
@@ -450,4 +454,5 @@ if __name__ == "__main__":
         else:
             print("Red (player 0, player 1 in project spec) wins")
 
-        visualize_board_manually(graph_list, state_status_list_list)
+        if visualize:
+            visualize_board_manually(graph_list, state_status_list_list)

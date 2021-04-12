@@ -19,7 +19,7 @@ if __name__ == "__main__":
         sim_world = SimWorldNim(args.nim_N, args.nim_K)
         # print(reward)
     elif args.game_type == GameType.HEX:
-        sim_world = SimWorldHex(args.board_size)
+        sim_world = SimWorldHex(args.board_size, args.visualize)
     else:
         raise NotImplementedError()
 
@@ -106,6 +106,7 @@ if __name__ == "__main__":
         if reward == 1:
             victories += 1
 
-        # visualize_board_manually(graph_list, state_status_list_list)
+        if args.visualize:
+            visualize_board_manually(graph_list, state_status_list_list)
 
     print("won {} out of {} games".format(victories, games))

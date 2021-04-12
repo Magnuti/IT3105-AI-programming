@@ -18,6 +18,7 @@ class Arguments:
         self.epsilon = config_data["epsilon"]
         self.epsilon_decay_function = config_data["epsilon_decay_function"]
         self.epsilon_decay = config_data["epsilon_decay"]
+        self.visualize = config_data["visualize"]
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions
