@@ -1,11 +1,10 @@
 import numpy as np
+import time
+import random
+
 from mcts import MonteCarloTreeSearch
 from function_approximator import ANET
 from constants import EpsilonDecayFunction
-# TODO
-# from visualization import visualize_board, plot_performance
-import time
-import random
 
 
 class RL_agent:
@@ -32,7 +31,7 @@ class RL_agent:
         # TODO Think it's helpful to just plot this to see how it's manifesting
         epsilon_history = []
 
-        starting_player = 0
+        starting_player = 1
         self.sim_world.reset_game(starting_player)
 
         episode_save = self.args.episodes // (self.args.games_to_save - 1)
@@ -44,8 +43,11 @@ class RL_agent:
         print("Saving every {}th episode".format(episode_save_interval))
 
         for episode in range(self.args.episodes):
+            starting_player = 1 - starting_player  # Alternate between 0 and 1
+            self.sim_world.reset_game(starting_player)
+
             last_episode = episode == self.args.episodes - 1
-            if(episode % 50 == 0 or last_episode):
+            if(episode % 1 == 0 or last_episode):
                 print("--- Episode {} ---".format(episode))
             if episode in episode_save_interval:
                 print("Saving episode", episode)
@@ -107,12 +109,7 @@ class RL_agent:
 
             epsilon_history.append(self.epsilon)
 
-            if not last_episode:
-                starting_player = 1 - starting_player  # Alternate between 0 and 1
-                self.sim_world.reset_game(starting_player)
-
-                # ? Why should we not train the ANET on the last episode?
-                self.actor.train_ANET()
+            self.actor.train_ANET()
 
 
 class Actor:
