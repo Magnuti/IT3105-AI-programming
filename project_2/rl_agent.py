@@ -20,10 +20,14 @@ class RL_agent:
         self.model_save_path = model_save_path
         self.best_model_save_path = best_model_save_path
 
-        if args.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
-            self.epsilon_decay = self.epsilon / self.args.episodes  # Linear decay
-        else:
+        if self.args.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL:
             self.epsilon_decay = args.epsilon_decay
+        elif self.args.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID:
+            self.epsilon_decay = args.epsilon_decay
+        elif self.args.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
+            self.epsilon_decay = self.epsilon / self.args.episodes
+        else:
+            raise NotImplementedError()
 
         self.actor = Actor(self.sim_world, args)
 
@@ -43,6 +47,7 @@ class RL_agent:
         print("Saving every {}th episode".format(episode_save_interval))
 
         for episode in range(self.args.episodes):
+            start = time.time()
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
 
@@ -63,18 +68,22 @@ class RL_agent:
             # SAP_list_in_current_episode.clear()
 
             # EPSILON UPDATE
-            if self.args.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL.value:
+            if self.args.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL:
                 self.epsilon *= self.epsilon_decay
-            elif self.args.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID.value:
+            elif self.args.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID:
                 # Horizontally flipped Sigmoid
                 self.epsilon = 1 / \
                     (1+np.exp((episode-(self.args.episodes/2))/(self.args.episodes*0.08)))
-            elif self.args.epsilon_decay_function == EpsilonDecayFunction.LINEAR.value:
+            elif self.args.epsilon_decay_function == EpsilonDecayFunction.LINEAR:
                 self.epsilon -= self.epsilon_decay
             else:
                 raise NotImplementedError()
+
             if last_episode:
                 self.epsilon = 0  # Target policy for last run
+
+            print(self.epsilon_decay)
+            print("\tepsilon:", self.epsilon)
 
             # TODO: (?) need child_states with visualization like in project 1
             # self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
@@ -111,7 +120,13 @@ class RL_agent:
 
             epsilon_history.append(self.epsilon)
 
+            train_start = time.time()
             self.actor.train_ANET()
+            train_used = time.time() - train_start
+            print("Training took {} seconds".format(train_used))
+
+            used = time.time() - start
+            print("This episode took {} seconds".format(used))
 
 
 class Actor:
@@ -120,6 +135,7 @@ class Actor:
         self.sim_world = sim_world
         # TODO pass in learning rate to ANET ?
         self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
+        self.ANET.cache_model_params()
         # TODO we need to pass in explore_constant, which should probably be decaying
         temp_explore_constant = 0.7
         self.MCTS = MonteCarloTreeSearch(
@@ -146,6 +162,9 @@ class Actor:
             # Random choice without replacement
             random_selection = random.sample(self.replay_buffer, k=sample_size)
 
+        # TODO select the [:-240] last cases from the replay buffer and 16 from the [-240:] list
+        # TODO this way the last cases are preferred
+
         # TODO it may be an idea to split replay_buffer into replay_buffer_x and
         # replay_buffer_y so we can skip this part
         x = np.empty((len(random_selection), len(random_selection[0][0])))
@@ -161,3 +180,5 @@ class Actor:
         if plot:
             # TODO plot training graph (?), but atm there is no validation set
             pass
+
+        self.ANET.cache_model_params()
