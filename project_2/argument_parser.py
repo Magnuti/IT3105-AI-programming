@@ -28,6 +28,11 @@ class Arguments:
             # game since we can have [0-10] pieces) + the ID of the player (two bits)
             self.neurons_per_layer.insert(0, self.nim_N + 3)
             self.neurons_per_layer.append(self.nim_K)
+
+            if self.visualize:
+                self.visualize = False
+                print(
+                    "Warning: visualize was set to false since we do not visualize the game of Nim.")
         elif self.game_type == GameType.HEX:
             # A NxN board has N^2 cells, each cell is represented as two bits,
             # we also need 2 bits to represent the current player.

@@ -58,8 +58,9 @@ if __name__ == "__main__":
         starting_player = 1 - starting_player
         sim_world.reset_game(starting_player)
 
-        graph_list = []
-        state_status_list_list = []
+        if args.game_type == GameType.HEX:
+            graph_list = []
+            state_status_list_list = []
 
         gameover, reward = sim_world.get_gameover_and_reward(
             visualization=True)
@@ -101,9 +102,10 @@ if __name__ == "__main__":
             gameover, reward = sim_world.get_gameover_and_reward(
                 visualization=True)
 
-            graph_list.append(sim_world.graph)
-            state_status_list_list.append(
-                list(map(lambda x: x.status, sim_world.cells)))
+            if args.game_type == GameType.HEX:
+                graph_list.append(sim_world.graph)
+                state_status_list_list.append(
+                    list(map(lambda x: x.status, sim_world.cells)))
 
         # TODO try to set best player as min as well
         if reward == 1:
