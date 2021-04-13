@@ -29,6 +29,8 @@ class RL_agent:
         else:
             raise NotImplementedError()
 
+        print("Epsilon decay:", self.epsilon_decay)
+
         self.actor = Actor(self.sim_world, args)
 
     def play(self):
@@ -82,7 +84,6 @@ class RL_agent:
             if last_episode:
                 self.epsilon = 0  # Target policy for last run
 
-            print(self.epsilon_decay)
             print("\tepsilon:", self.epsilon)
 
             # TODO: (?) need child_states with visualization like in project 1
@@ -154,31 +155,33 @@ class Actor:
         self.MCTS.start_new_game()
 
     def train_ANET(self, plot=False):
+        if len(self.replay_buffer) > 256:
+            # TODO may take 256 as config param
+            # Drop old training cases when the replay buffer reaches a size of 256
+            from_index = len(self.replay_buffer) - 256
+            self.replay_buffer = self.replay_buffer[from_index:]
+            assert len(self.replay_buffer) == 256
+
         if len(self.replay_buffer) <= self.args.replay_buffer_selection_size:
             # Select the entire replay buffer it is isn't filled up enough
-            random_selection = self.replay_buffer
+            # TODO may be an idea to skip training until it is somewhat filled up
+            # TODO so the beginning cases are not overtrained on
+            selection = self.replay_buffer
         else:
             sample_size = self.args.replay_buffer_selection_size
             # Random choice without replacement
-            random_selection = random.sample(self.replay_buffer, k=sample_size)
+            selection = random.sample(self.replay_buffer, k=sample_size)
 
-        # TODO select the [:-240] last cases from the replay buffer and 16 from the [-240:] list
-        # TODO this way the last cases are preferred
-
-        # TODO it may be an idea to split replay_buffer into replay_buffer_x and
+        # It may be an idea to split replay_buffer into replay_buffer_x and
         # replay_buffer_y so we can skip this part
-        x = np.empty((len(random_selection), len(random_selection[0][0])))
-        y = np.empty((len(random_selection), len(random_selection[0][1])))
+        x = np.empty((len(selection), len(selection[0][0])))
+        y = np.empty((len(selection), len(selection[0][1])))
 
-        for i, train_case in enumerate(random_selection):
+        for i, train_case in enumerate(selection):
             x[i] = train_case[0]
             y[i] = train_case[1]
 
         history = self.ANET.fit(
             x, y, batch_size=self.args.mini_batch_size, epochs=self.args.epochs)
-
-        if plot:
-            # TODO plot training graph (?), but atm there is no validation set
-            pass
 
         self.ANET.cache_model_params()
