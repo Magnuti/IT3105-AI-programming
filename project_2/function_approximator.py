@@ -1,7 +1,15 @@
-from tensorflow import keras
-from tensorflow.keras import layers
-
+import os  # nopep8
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # nopep8
 from argument_parser import Arguments
+import tensorflow as tf
+from tensorflow.keras import layers
+from tensorflow import keras
+import numpy as np
+
+# tf.debugging.set_log_device_placement(True)
+# tf.config.set_visible_devices([], 'GPU')
+# my_devices = tf.config.list_physical_devices(device_type='CPU')
+# tf.config.set_visible_devices([], 'CPU')
 
 
 class ANET:
@@ -33,11 +41,51 @@ class ANET:
 
         self.model = model
 
+    def cache_model_params(self):
+        self.params_per_layer = []
+        for layer in self.model.layers:
+            params = layer.get_weights()
+            af = layer.get_config()["activation"]
+            activation_function = tf.keras.activations.get(af)
+            self.params_per_layer.append(
+                (params[0], params[1], activation_function))
+
     def forward(self, features):
-        if len(features.shape) == 1:
-            # Reshape from (k, ) to (1, k) since that means a batch size of 1
-            features = features.reshape((1, features.shape[0]))
-        return self.model(features)
+        # print(features.shape)
+        # if len(features.shape) == 1:
+        # Reshape from (k, ) to (1, k) since that means a batch size of 1
+        # features = features.reshape((1, features.shape[0]))
+        features = np.expand_dims(features, axis=0)
+        # print(features.shape)
+
+        # with tf.device('/CPU:0'):
+        # return self.model(features)
+        # keras_output = self.model(features)
+
+        x = features
+        for i, layer in enumerate(self.model.layers):
+            # print("Layer", i)
+            # params = layer.get_weights()
+            params = self.params_per_layer[i]
+            weights = params[0]
+            # print("Input", x.shape, type(x))
+            # print("Weight", weights.shape, type(weights))
+            bias = params[1]
+            # print("Bias", bias.shape, type(bias))
+            # af = layer.get_config()["activation"]
+            # activation_function = tf.keras.activations.get(af)
+            activation_function = params[2]
+            # print(activation_function)
+            z = np.matmul(x, weights) + bias
+            z = tf.convert_to_tensor(z)  # ? can we avoid this?
+            # print(type(z))
+            x = activation_function(z)
+
+        # print(keras_output)
+        # print(x)
+
+        # exit()
+        return x
 
     def fit(self, x, y, batch_size, epochs, verbose=0):
         return self.model.fit(

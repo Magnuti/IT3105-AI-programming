@@ -26,7 +26,7 @@ if __name__ == "__main__":
     model_save_path = pathlib.Path("saved_models")
     best_model_save_path = pathlib.Path("best_model")
 
-    # Temporarily
+    # TODO temporarily
     train = True
     if train:
         if(model_save_path.exists()):

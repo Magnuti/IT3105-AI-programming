@@ -185,19 +185,8 @@ class MonteCarloTreeSearch:
 
         gameover, reward = self.simworld.get_gameover_and_reward()
         while not gameover:
-            # Batch size is 1 so we get the output by indexing [0]
-            output_propabilities = self.ANET.forward(
-                self.simworld.get_game_state()).numpy()[0]
 
             child_states = self.simworld.get_child_states()
-
-            # Set illegal actions to 0 probability
-            for i, state in enumerate(child_states):
-                if state is None:
-                    output_propabilities[i] = 0.0
-
-            # Normalize the new probabilities
-            output_propabilities /= sum(output_propabilities)
 
             if random.random() < epsilon:
                 # Make random choice (including the best action)
@@ -210,6 +199,17 @@ class MonteCarloTreeSearch:
                 self.simworld.pick_move(choice)
             else:
                 # Make greedy choice
+
+                # Batch size is 1 so we get the output by indexing [0]
+                output_propabilities = self.ANET.forward(
+                    self.simworld.get_game_state()).numpy()[0]
+                # Set illegal actions to 0 probability
+                for i, state in enumerate(child_states):
+                    if state is None:
+                        output_propabilities[i] = 0.0
+
+                # Normalize the new probabilities
+                output_propabilities /= sum(output_propabilities)
                 move_index = np.argmax(output_propabilities)
                 self.simworld.pick_move(child_states[move_index])
 
