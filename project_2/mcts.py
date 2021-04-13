@@ -59,17 +59,15 @@ class MonteCarloTreeSearch:
             self.simworld.pick_move(self.root.state)
 
         # Based on all the simulations, choose recommended actual_move
-        children = self.root.children
-        # To do a greedy choice
-        self.explore_constant = 0
-        move_num = self.tree_select_move(self.root, len(children))
+        # which is the one with the highest visit count
+        move_num = np.argmax(self.root.action_visit)
 
         # Make training case for root_node
         target_dist = np.array(self.root.action_visit, dtype=float)
         target_norm = np.sum(target_dist)
         target_dist /= target_norm
 
-        return children[move_num].state, (self.root.state, target_dist)
+        return self.root.children[move_num].state, (self.root.state, target_dist)
 
     # using UCT algorithm
     def tree_search(self):
