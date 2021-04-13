@@ -49,6 +49,7 @@ class RL_agent:
         print("Saving every {}th episode".format(episode_save_interval))
 
         for episode in range(self.args.episodes):
+            start = time.time()
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
 
@@ -63,12 +64,7 @@ class RL_agent:
                     self.actor.ANET.save_model(
                         "best_model", self.best_model_save_path)
 
-            # self.critic.new_episode()
-            # TODO is this needed ?
-            # self.actor.new_episode()
-            # SAP_list_in_current_episode.clear()
-
-            # EPSILON UPDATE
+            # Epsilon update
             if self.args.epsilon_decay_function == EpsilonDecayFunction.EXPONENTIAL:
                 self.epsilon *= self.epsilon_decay
             elif self.args.epsilon_decay_function == EpsilonDecayFunction.REVERSED_SIGMOID:
@@ -85,12 +81,7 @@ class RL_agent:
 
             print("\tepsilon:", self.epsilon)
 
-            # TODO: (?) need child_states with visualization like in project 1
-            # self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
-            # self.child_states = self.sim_world.get_child_states()
-
             # First action
-            # TODO epsilon handled correctly in actor?
             self.actor.pick_next_actual_action(self.epsilon)
 
             gameover = self.sim_world.get_gameover_and_reward(
@@ -100,14 +91,20 @@ class RL_agent:
             while not gameover:
 
                 self.actor.pick_next_actual_action(self.epsilon)
-                # TODO should reward be fetched here too?
-                gameover, reward = self.sim_world.get_gameover_and_reward(
+                gameover, _ = self.sim_world.get_gameover_and_reward(
                     visualization=last_episode)
 
             self.actor.start_new_game()
 
             epsilon_history.append(self.epsilon)
+
+            train_start = time.time()
             self.actor.train_ANET()
+            train_used = time.time() - train_start
+            print("Training took {} seconds".format(train_used))
+
+            used = time.time() - start
+            print("This episode took {} seconds".format(used))
 
 
 class Actor:
@@ -118,7 +115,7 @@ class Actor:
         self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
         self.ANET.cache_model_params()
         # TODO we need to pass in explore_constant, which should probably be decaying
-        temp_explore_constant = 0.7
+        temp_explore_constant = 1
         self.MCTS = MonteCarloTreeSearch(
             explore_constant=temp_explore_constant, simworld=sim_world, ANET=self.ANET, args=args)
         self.replay_buffer = []
@@ -126,7 +123,6 @@ class Actor:
 
     # assuming that the current state is already picked in simworld
     def pick_next_actual_action(self, epsilon):
-        # TODO is it right that the actor only consults the MCTS for next actual move?
         next_state, train_case = self.MCTS.search_next_actual_move(epsilon)
         self.replay_buffer.append(train_case)
         self.sim_world.pick_move(next_state)

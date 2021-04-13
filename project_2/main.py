@@ -14,10 +14,8 @@ if __name__ == "__main__":
     args = Arguments()
     args.parse_arguments()
 
-    # TODO: init RL_agent and play
     if args.game_type == GameType.NIM:
         sim_world = SimWorldNim(args.nim_N, args.nim_K)
-        # print(reward)
     elif args.game_type == GameType.HEX:
         sim_world = SimWorldHex(args.board_size, args.visualize)
     else:
@@ -55,7 +53,7 @@ if __name__ == "__main__":
 
     # TODO try best_vs_random on nim as well, may be far easier to see that
 
-    games = 100
+    games = 1000
     starting_player = 1
     print("Our ANET player is black")
     for game in range(games):
@@ -75,6 +73,71 @@ if __name__ == "__main__":
 
             if sim_world.current_player_array_to_id():
                 # Player 1's turn
+                output_propabilities = anet.forward(
+                    sim_world.get_game_state()).numpy()[0]
+                child_states = sim_world.get_child_states()
+
+                # Set illegal actions to 0 probability
+                for i, state in enumerate(child_states):
+                    if state is None:
+                        output_propabilities[i] = 0.0
+
+                # Normalize the new probabilities
+                output_propabilities /= sum(output_propabilities)
+
+                # Make greedy choice
+                move_index = np.argmax(output_propabilities)
+                sim_world.pick_move(child_states[move_index])
+            else:
+                child_states = sim_world.get_child_states()
+                legal_child_states = []
+                for i in range(len(child_states)):
+                    if child_states[i] is not None:
+                        legal_child_states.append(child_states[i])
+
+                # For simplicity we just select a random legal action here
+                legal_action_index = np.random.randint(
+                    0, len(legal_child_states))
+                next_state = legal_child_states[legal_action_index]
+                sim_world.pick_move(next_state)
+
+            gameover, reward = sim_world.get_gameover_and_reward(
+                visualization=True)
+
+            if args.game_type == GameType.HEX:
+                graph_list.append(sim_world.graph)
+                state_status_list_list.append(
+                    list(map(lambda x: x.status, sim_world.cells)))
+
+        # TODO try to set best player as min as well
+        if reward == 1:
+            victories += 1
+
+        if args.visualize:
+            visualize_board_manually(graph_list, state_status_list_list)
+
+    print("won {} out of {} games".format(victories, games))
+
+    victories = 0
+    starting_player = 1
+    print("Our ANET player is red")
+    for game in range(games):
+        starting_player = 1 - starting_player
+        sim_world.reset_game(starting_player)
+
+        if args.game_type == GameType.HEX:
+            graph_list = []
+            state_status_list_list = []
+
+        gameover, reward = sim_world.get_gameover_and_reward(
+            visualization=True)
+        move_count = 0
+        while not gameover:
+            move_count += 1
+            # Batch size is 1 so we get the output by indexing [0]
+
+            if not sim_world.current_player_array_to_id():
+                # Player 0's turn
                 output_propabilities = anet.forward(
                     sim_world.get_game_state()).numpy()[0]
                 child_states = sim_world.get_child_states()

@@ -16,7 +16,6 @@ class MonteCarloTreeSearch:
             simworld:  actual_simworld, which state is reset at end of search_next_actual_move()
         '''
 
-        # TODO CYT
         self.explore_constant = explore_constant
         self.simworld = simworld
         self.simulations = args.simulations
@@ -80,7 +79,6 @@ class MonteCarloTreeSearch:
             state = self.simworld.get_game_state()
             hash_state = self.get_hashed_state(state)
 
-            # TODO CYT, but first check that it's not a bottleneck
             node = self.tree[hash_state]
 
             # if node is leaf (means unexpanded (which DOESN'T inform anything about it being a gameover))
@@ -110,7 +108,6 @@ class MonteCarloTreeSearch:
             # Get the greedy best-action coice for player 1
             # the math here would be better to do in np, but need to be explicit to be able to cythonize
             values = []
-            # TODO CYT: not sure how math.inf translates to Cython
             for a in range(num_child_states):
                 if node.children[a] is None:
                     values.append(-math.inf)
@@ -278,9 +275,7 @@ class Node():
 
     def __init__(self, state, num_childstates):
         self.state = state
-        # TODO CYT: this becomes a fixed size array of Node|None when then node is expanded
         self.children = None
-        # TODO CYT: arrays<float> filled with zero need to be initilized with a range that sets all spots to 0 think (look it up)
         self.action_value = [0] * num_childstates
         self.action_cumreward = [0] * num_childstates
         self.action_visit = [0] * num_childstates
