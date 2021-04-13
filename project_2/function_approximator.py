@@ -1,7 +1,15 @@
-from tensorflow import keras
-from tensorflow.keras import layers
-
+import os  # nopep8
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # nopep8
 from argument_parser import Arguments
+import tensorflow as tf
+from tensorflow.keras import layers
+from tensorflow import keras
+
+
+# tf.debugging.set_log_device_placement(True)
+# tf.config.set_visible_devices([], 'GPU')
+# my_devices = tf.config.list_physical_devices(device_type='CPU')
+# tf.config.set_visible_devices([], 'CPU')
 
 
 class ANET:
@@ -37,6 +45,8 @@ class ANET:
         if len(features.shape) == 1:
             # Reshape from (k, ) to (1, k) since that means a batch size of 1
             features = features.reshape((1, features.shape[0]))
+        # with tf.device('/CPU:0'):
+            # return self.model(features)
         return self.model(features)
 
     def fit(self, x, y, batch_size, epochs, verbose=0):

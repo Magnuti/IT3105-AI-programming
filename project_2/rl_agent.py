@@ -42,6 +42,11 @@ class RL_agent:
         episode_save_interval[-1] = self.args.episodes - 1
         print("Saving every {}th episode".format(episode_save_interval))
 
+        import cProfile
+        import pstats
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         for episode in range(self.args.episodes):
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
@@ -76,12 +81,6 @@ class RL_agent:
             if last_episode:
                 self.epsilon = 0  # Target policy for last run
 
-            # TODO: (?) need child_states with visualization like in project 1
-            # self.successor_states, self.successor_states_with_visualization = self.sim_world.find_child_states()
-            # self.child_states = self.sim_world.get_child_states()
-
-            # First action
-            # TODO epsilon handled correctly in actor?
             self.actor.pick_next_actual_action(self.epsilon)
 
             gameover = self.sim_world.get_gameover_and_reward(
@@ -112,6 +111,10 @@ class RL_agent:
             epsilon_history.append(self.epsilon)
 
             self.actor.train_ANET()
+        profiler.disable()
+        stats = pstats.Stats(profiler).sort_stats('cumtime')
+        stats.print_stats(200)
+        raise Exception("profile finished")
 
 
 class Actor:
