@@ -46,14 +46,7 @@ class RL_agent:
         episode_save_interval[-1] = self.args.episodes - 1
         print("Saving every {}th episode".format(episode_save_interval))
 
-        import cProfile
-        import pstats
-        profiler = cProfile.Profile()
-        profiler.enable()
-
         for episode in range(self.args.episodes):
-            # start = time.time()
-
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
 
@@ -104,40 +97,16 @@ class RL_agent:
 
             # For each step of the episode: do another move
             while not gameover:
-                # TODO
-                # new_state_with_visualization = self.successor_states_with_visualization[action]
-
-                # TODO don't think we need child states here, but the visualization part should be implemented somewhere in the code
-                # self.child_states, self.successor_states_with_visualization = self.sim_world.get_child_states()
 
                 self.actor.pick_next_actual_action(self.epsilon)
                 # TODO should reward be fetched here too?
                 gameover, reward = self.sim_world.get_gameover_and_reward(
                     visualization=last_episode)
 
-                # # visualize current episode if it's in visualize_training_episodes or last episode
-                # if (self.args.visualize and (episode in self.args.visualize_training_episodes or last_episode)):
-                #     # TODO
-                #     # visualize_board(self.sim_world.graph, new_state_with_visualization, episode=episode)
-                #     # time.sleep(self.args.frame_time)
-                #     pass
-
             self.actor.start_new_game()
 
             epsilon_history.append(self.epsilon)
-
-            # train_start = time.time()
             self.actor.train_ANET()
-
-        profiler.disable()
-        stats = pstats.Stats(profiler).sort_stats('cumtime')
-        stats.print_stats(200)
-        raise Exception("profile finished")
-
-        # train_used = time.time() - train_start
-        # print("Training took {} seconds".format(train_used))
-        # used = time.time() - start
-        # print("This episode took {} seconds".format(used))
 
 
 class Actor:
