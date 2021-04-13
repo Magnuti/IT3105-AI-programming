@@ -1,6 +1,6 @@
 import yaml
 
-from constants import GameType, ActivationFunction, Optimizer
+from constants import GameType, ActivationFunction, Optimizer, EpsilonDecayFunction
 
 
 class Arguments:
@@ -16,7 +16,8 @@ class Arguments:
         self.simulations = config_data["simulations"]
         self.learning_rate = config_data["learning_rate"]
         self.epsilon = config_data["epsilon"]
-        self.epsilon_decay_function = config_data["epsilon_decay_function"]
+        self.epsilon_decay_function = EpsilonDecayFunction(
+            config_data["epsilon_decay_function"])
         self.epsilon_decay = config_data["epsilon_decay"]
         self.visualize = config_data["visualize"]
 
