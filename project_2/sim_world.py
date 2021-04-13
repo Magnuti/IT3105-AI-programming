@@ -403,7 +403,7 @@ class SimWorldHex(SimWorldInterface):
         for i in range(0, len(self.state), 2):
             cell_index = i // 2
             cell_state = self.state[i: i + 2]
-            if np.array_equal(cell_state, empty_cell_array):
+            if cell_state[0] == empty_cell_array[0] and cell_state[1] == empty_cell_array[1]:
                 # Empty cell
                 status = BoardCell.EMPTY_CELL
 
