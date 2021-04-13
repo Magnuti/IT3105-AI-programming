@@ -16,6 +16,7 @@ For the Hex game, player 0 is red, while player 1 is black
 
 player_id_0 = np.array([1, 0], dtype=int)
 player_id_1 = np.array([0, 1], dtype=int)
+empty_cell_array = np.array([0, 0], dtype=int)
 
 
 class SimWorldInterface:
@@ -293,7 +294,8 @@ class SimWorldHex(SimWorldInterface):
 
         child_states = []
         for i in range(0, len(self.state), 2):
-            if np.array_equal(self.state[i: i + 2], np.array([0, 0], dtype=int)):
+            # if np.array_equal(self.state[i: i + 2], np.array([0, 0], dtype=int)):
+            if (self.state[i: i + 2] == empty_cell_array).all():
                 # Empty cell
                 # The format is [next_player...current_player...]
                 # where we set current_player to some board cell, and the next
@@ -303,13 +305,15 @@ class SimWorldHex(SimWorldInterface):
                 child_state[:2] = np.roll(self.current_player, 1)
                 child_state[2:] = self.state
                 child_state[2 + i: 4 + i] = self.current_player
-            elif np.array_equal(self.state[i: i + 2], player_id_0):
+            # elif np.array_equal(self.state[i: i + 2], player_id_0):
+            elif (self.state[i: i + 2] == player_id_0).all():
                 # Player 0's cell
                 child_state = None
-            elif np.array_equal(self.state[i: i + 2], player_id_1):
+            elif (self.state[i: i + 2] == player_id_1).all():
                 # Player 1's cell
                 child_state = None
             else:
+                # TODO consider skipping the last elif and do a simple else to save computation
                 raise ValueError("Illegal value in self.state", self.state)
 
             child_states.append(child_state)
@@ -339,13 +343,14 @@ class SimWorldHex(SimWorldInterface):
             cell_index = i // 2
             cell_state = self.state[i: i + 2]
 
-            if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
+            # if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
+            if (cell_state == empty_cell_array).all():
                 # Empty cell
                 continue
-            elif np.array_equal(cell_state, player_id_0):
+            elif (cell_state == player_id_0).all():
                 # Player 0's cell
                 player_0_cells.add(cell_index)
-            elif np.array_equal(cell_state, player_id_1):
+            elif (cell_state == player_id_1).all():
                 # Player 1's cell
                 player_1_cells.add(cell_index)
             else:
@@ -399,7 +404,7 @@ class SimWorldHex(SimWorldInterface):
         for i in range(0, len(self.state), 2):
             cell_index = i // 2
             cell_state = self.state[i: i + 2]
-            if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
+            if np.array_equal(cell_state, empty_cell_array):
                 # Empty cell
                 status = BoardCell.EMPTY_CELL
 
