@@ -5,7 +5,7 @@
 # The type of game to be played [nim, hex]
 game_type: hex
 
-episodes: 150
+episodes: 10
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
