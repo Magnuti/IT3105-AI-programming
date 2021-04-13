@@ -123,6 +123,7 @@ class Actor:
         self.sim_world = sim_world
         # TODO pass in learning rate to ANET ?
         self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
+        self.ANET.cache_model_params()
         # TODO we need to pass in explore_constant, which should probably be decaying
         temp_explore_constant = 0.7
         self.MCTS = MonteCarloTreeSearch(
@@ -164,3 +165,5 @@ class Actor:
         if plot:
             # TODO plot training graph (?), but atm there is no validation set
             pass
+
+        self.ANET.cache_model_params()
