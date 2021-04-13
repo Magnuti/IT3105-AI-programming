@@ -31,6 +31,7 @@ class TournamentOfProgressivePolicies:
             anet = ANET(self.args.neurons_per_layer,
                         self.args.activation_functions)
             anet.load_model_path_known(path)
+            anet.cache_model_params()
             anets[path.name] = anet
             victories_per_anet[path.name] = 0
 

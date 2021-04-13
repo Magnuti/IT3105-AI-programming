@@ -160,7 +160,6 @@ class Actor:
             # Drop old training cases when the replay buffer reaches a size of 256
             from_index = len(self.replay_buffer) - 256
             self.replay_buffer = self.replay_buffer[from_index:]
-            assert len(self.replay_buffer) == 256
 
         if len(self.replay_buffer) <= self.args.replay_buffer_selection_size:
             # Select the entire replay buffer it is isn't filled up enough

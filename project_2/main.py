@@ -26,19 +26,22 @@ if __name__ == "__main__":
     model_save_path = pathlib.Path("saved_models")
     best_model_save_path = pathlib.Path("best_model")
 
-    # if(model_save_path.exists()):
-    #     # Remove all saved models so we start of with a clean folder
-    #     shutil.rmtree(model_save_path)
-    # model_save_path.mkdir(exist_ok=True)
+    # Temporarily
+    train = True
+    if train:
+        if(model_save_path.exists()):
+            # Remove all saved models so we start of with a clean folder
+            shutil.rmtree(model_save_path)
+        model_save_path.mkdir(exist_ok=True)
 
-    # if(best_model_save_path.exists()):
-    #     # Remove all saved models so we start of with a clean folder
-    #     shutil.rmtree(best_model_save_path)
-    # best_model_save_path.mkdir(exist_ok=True)
+        if(best_model_save_path.exists()):
+            # Remove all saved models so we start of with a clean folder
+            shutil.rmtree(best_model_save_path)
+        best_model_save_path.mkdir(exist_ok=True)
 
-    # _RL_agent = RL_agent(sim_world, args, model_save_path,
-    #                      best_model_save_path)
-    # _RL_agent.play()
+        _RL_agent = RL_agent(sim_world, args, model_save_path,
+                             best_model_save_path)
+        _RL_agent.play()
 
     topp = TournamentOfProgressivePolicies(args, sim_world, model_save_path)
     topp.round_robin_tournament(args.games_between_agents)
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     # Best vs. random
     victories = 0
     anet = ANET(args.neurons_per_layer, args.activation_functions)
+    anet.cache_model_params()
     anet.load_model_path_known(
         best_model_save_path.joinpath("anet_episode_best_model"))
 
