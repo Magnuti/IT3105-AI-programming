@@ -1,5 +1,18 @@
 import math
+import pathlib
+import numpy as np
+
 from BasicClientActorAbs import BasicClientActorAbs
+from sim_world import SimWorldHex
+from function_approximator import ANET
+
+sim_world = SimWorldHex(6, False)
+save_path = pathlib.Path("oht_model")
+
+anet = ANET([], [])  # TODO pull the build_model method to its own method
+anet.load_model_path_known(save_path.joinpath("my_oht_model"))
+anet.cache_model_params()
+
 
 class BasicClientActor(BasicClientActorAbs):
 
@@ -19,16 +32,32 @@ class BasicClientActor(BasicClientActorAbs):
         """
 
         # This is an example player who picks random moves. REMOVE THIS WHEN YOU ADD YOUR OWN CODE !!
-        next_move = tuple(self.pick_random_free_cell(
-            state, size=int(math.sqrt(len(state)-1))))
-        #############################
-        #
-        #
-        # YOUR CODE HERE
-        #
-        # next_move = ???
-        ##############################
-        return next_move
+        # next_move = tuple(self.pick_random_free_cell(
+        # state, size=int(math.sqrt(len(state)-1))))
+
+        sim_world_state = sim_world.oht_state_to_this_state(state)
+
+        sim_world.pick_move(sim_world_state)
+
+        output_propabilities = anet.forward(
+            sim_world.get_game_state()).numpy()[0]
+        child_states = sim_world.get_child_states()
+
+        # Set illegal actions to 0 probability
+        for i, state in enumerate(child_states):
+            if state is None:
+                output_propabilities[i] = 0.0
+
+        # Normalize the new probabilities
+        output_propabilities /= sum(output_propabilities)
+
+        # Make greedy choice
+        move_index = np.argmax(output_propabilities)
+        # sim_world.pick_move(child_states[move_index])
+
+        y, x = sim_world.index_to_coordinate(move_index)
+
+        return (y, x)
 
     def handle_series_start(self, unique_id, series_id, player_map, num_games, game_params):
         """
@@ -42,6 +71,9 @@ class BasicClientActor(BasicClientActorAbs):
 
         """
         self.series_id = series_id
+
+        print("We are player", self.series_id)
+        print("\tIn our model", self.series_id - 1)
         #############################
         #
         #
@@ -56,13 +88,12 @@ class BasicClientActor(BasicClientActorAbs):
         :return
         """
         self.starting_player = start_player
-        #############################
-        #
-        #
-        # YOUR CODE (if you have anything else) HERE
-        #
-        #
-        ##############################
+
+        print("Starting player is", self.starting_player)
+        print("\tIn our model", self.starting_player - 1)
+
+        # -1 since we use [0, 1] instead of [1, 2]
+        sim_world.reset_game(self.series_id - 1)
 
     def handle_game_over(self, winner, end_state):
         """

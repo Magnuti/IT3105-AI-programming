@@ -157,9 +157,9 @@ class SimWorldHex(SimWorldInterface):
         # same set we have a winner.
         self.visualize = visualize
 
-        self.child_states_cache = {}
-        self.gameover_and_reward_cache = {}
-        self.winner_set_cache = {}
+        # self.child_states_cache = {}
+        # self.gameover_and_reward_cache = {}
+        # self.winner_set_cache = {}
 
     def reset_game(self, starting_player):
         super().reset_game(starting_player)
@@ -275,6 +275,16 @@ class SimWorldHex(SimWorldInterface):
         raise IndexError(
             f"index '{index}' is not within the bounds given by board_size")
 
+    def index_to_coordinate(self, index):
+        count = 0
+        for y in range(self.board_size):
+            for x in range(self.board_size):
+                if index == count:
+                    return (y, x)
+                count += 1
+        raise IndexError(
+            f"index '{index}' is not within the bounds given by board_size")
+
     def get_child_states(self):
         """
         Returns a list of size board_size ** 2 + 2 of all possible states where
@@ -289,8 +299,8 @@ class SimWorldHex(SimWorldInterface):
         """
         hashable_state = tuple(self.get_game_state())
 
-        if hashable_state in self.child_states_cache:
-            return self.child_states_cache[hashable_state]
+        # if hashable_state in self.child_states_cache:
+        #     return self.child_states_cache[hashable_state]
 
         child_states = []
         for i in range(0, len(self.state), 2):
@@ -317,22 +327,23 @@ class SimWorldHex(SimWorldInterface):
 
             child_states.append(child_state)
 
-        self.child_states_cache[hashable_state] = child_states
+        # self.child_states_cache[hashable_state] = child_states
 
-        return self.child_states_cache[hashable_state]
+        # return self.child_states_cache[hashable_state]
+        return child_states
 
     def get_gameover_and_reward(self, visualization=False):
         # Game over does not depend of whose player's turn it is
         hashable_state = tuple(self.state)
 
-        if hashable_state in self.gameover_and_reward_cache:
-            game_over, reward = self.gameover_and_reward_cache[hashable_state]
-            if self.visualize and visualization:
-                # We only need to update the graph when visualize is on to
-                if hashable_state in self.winner_set_cache:
-                    self.winner_set = self.winner_set_cache[hashable_state]
-                self.__update_graph_statuses(game_over)
-            return game_over, reward
+        # if hashable_state in self.gameover_and_reward_cache:
+        #     game_over, reward = self.gameover_and_reward_cache[hashable_state]
+        #     if self.visualize and visualization:
+        #         # We only need to update the graph when visualize is on to
+        #         if hashable_state in self.winner_set_cache:
+        #             self.winner_set = self.winner_set_cache[hashable_state]
+        #         self.__update_graph_statuses(game_over)
+        #     return game_over, reward
 
         # Player 0 is red (R1 and R2), while player 1 is black (B1 and B2)
         player_0_cells = {"R1", "R2"}
@@ -372,7 +383,7 @@ class SimWorldHex(SimWorldInterface):
         if disjoint_set_player_0.find("R1") == disjoint_set_player_0.find("R2"):
             # Red wins, player 0
             self.winner_set = player_0_cells
-            self.winner_set_cache[hashable_state] = player_0_cells
+            # self.winner_set_cache[hashable_state] = player_0_cells
             game_over = True
             reward = -1
 
@@ -387,7 +398,7 @@ class SimWorldHex(SimWorldInterface):
         if disjoint_set_player_1.find("B1") == disjoint_set_player_1.find("B2"):
             # Black wins, player 1
             self.winner_set = player_1_cells
-            self.winner_set_cache[hashable_state] = player_1_cells
+            # self.winner_set_cache[hashable_state] = player_1_cells
             game_over = True
             reward = 1
 
@@ -395,9 +406,10 @@ class SimWorldHex(SimWorldInterface):
             # We only need to update the graph when visualize is on
             self.__update_graph_statuses(game_over)
 
-        self.gameover_and_reward_cache[hashable_state] = (game_over, reward)
+        # self.gameover_and_reward_cache[hashable_state] = (game_over, reward)
 
-        return self.gameover_and_reward_cache[hashable_state]
+        # return self.gameover_and_reward_cache[hashable_state]
+        return game_over, reward
 
     def __update_graph_statuses(self, game_over=False):
         for i in range(0, len(self.state), 2):
@@ -423,6 +435,40 @@ class SimWorldHex(SimWorldInterface):
                 raise ValueError("Illegal value in self.state", self.state)
 
             self.cells[cell_index].status = status
+
+    def oht_state_to_this_state(self, oht_state):
+        state = np.empty_like(self.get_game_state())
+        for i, item in enumerate(oht_state):
+            if item == 0:
+                state[i*2:i*2+2] = empty_cell_array
+            elif item == 1:
+                # Player 1 in OHT is player 0 in sim_world
+                state[i*2:i*2+2] = player_id_0
+            elif item == 2:
+                # Player 2 in OHT is player 1 in sim_world
+                state[i*2:i*2+2] = player_id_1
+            else:
+                raise ValueError("Illegal value in oht_state", oht_state)
+
+        return state
+
+    def this_state_to_oht_state(self):
+        oht_state = []
+        state = self.get_game_state()
+        for i in range(0, len(state), 2):
+            cell = state[i:i+2]
+            if np.array_equal(cell, empty_cell_array):
+                oht_state[i] = 0
+            elif np.array_equal(cell, player_id_0):
+                # Player 1 in OHT is player 0 in sim_world
+                oht_state[i] = 1
+            elif np.array_equal(cell, player_id_1):
+                # Player 2 in OHT is player 1 in sim_world
+                oht_state[i] = 2
+            else:
+                raise ValueError("Illegal value in self.state", self.state)
+
+        return oht_state
 
 
 if __name__ == "__main__":
