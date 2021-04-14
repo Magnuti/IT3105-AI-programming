@@ -79,6 +79,7 @@ class RL_agent:
             if last_episode:
                 self.epsilon = 0  # Target policy for last run
 
+            # TODO: remove
             print("\tepsilon:", self.epsilon)
 
             # First action
