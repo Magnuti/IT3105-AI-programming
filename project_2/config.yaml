@@ -41,7 +41,7 @@ board_size: 5
 ### Parameters for the actor neural network (ANET) ###
 ######################################################
 
-# Set to null if we should use
+# Set to null to use the optimizer's default learning rate
 learning_rate: null
 
 # List of neurons in each hidden layer. Set to an empty list if no hidden
