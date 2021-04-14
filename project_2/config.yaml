@@ -5,7 +5,7 @@
 # The type of game to be played [nim, hex]
 game_type: hex
 
-episodes: 10
+episodes: 201
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
@@ -14,12 +14,12 @@ simulations: 500
 epsilon: 1
 
 # How epsilon should decay [exponential, reversed_sigmoid, linear]
-epsilon_decay_function: exponential
+epsilon_decay_function: linear
 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
 # Only used for epsilon_decay_function: exponential
 epsilon_decay: 0.9955
 
-visualize: False
+visualize: True # True or False
 
 ######################################################
 ### Nim variables ###
@@ -35,7 +35,7 @@ nim_K: 5
 ######################################################
 
 # Recommended size in the interval [3, 10]
-board_size: 5
+board_size: 4
 
 ######################################################
 ### Parameters for the actor neural network (ANET) ###
@@ -69,14 +69,14 @@ replay_buffer_selection_size: 128
 # Should be <= replay_buffer_selection_size
 mini_batch_size: 16
 
-epochs: 64
+epochs: 32
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
-games_to_save: 5
+games_to_save: 4
 
 ######################################################
 ### TOURNAMENTS ###
 ######################################################
 # The number of games to be played between any two ANET-based agents that
 # meet during the round-robin play of the TOPP.
-games_between_agents: 5
+games_between_agents: 8
