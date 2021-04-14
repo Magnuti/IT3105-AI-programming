@@ -1,7 +1,11 @@
-import tensorflow as tf
-from tensorflow import keras
-import numpy as np
+import os  # nopep8
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
+import numpy as np
+from tensorflow import keras
+import tensorflow as tf
+
+from constants import GameType
 from visualization import visualize_board_manually
 from sim_world import SimWorldNim, SimWorldHex
 from argument_parser import Arguments
@@ -55,11 +59,16 @@ class TournamentOfProgressivePolicies:
 
                 starting_player = 1
                 for game in range(games_between_agents):
+                    last_game = game == games_between_agents - 1
                     # print("\nPlaying a game between {} and {}".format(
                     # anet_0_name, anet_1_name))
                     starting_player = 1 - starting_player  # Alternate between 0 and 1
                     # Play a game between model_0 and model_1
                     self.sim_world.reset_game(starting_player)
+
+                    if self.args.game_type == GameType.HEX:
+                        graph_list = []
+                        state_status_list_list = []
 
                     gameover, reward = self.sim_world.get_gameover_and_reward()
                     while not gameover:
@@ -90,12 +99,13 @@ class TournamentOfProgressivePolicies:
                         move_index = np.argmax(output_propabilities)
                         self.sim_world.pick_move(child_states[move_index])
 
-                        gameover, reward = self.sim_world.get_gameover_and_reward()
+                        gameover, reward = self.sim_world.get_gameover_and_reward(
+                            visualization=True)
 
-                        # TODO fix viz manually
-                        # visualize_board(self.sim_world.graph, list(
-                        #     map(lambda x: x.status, self.sim_world.cells)), 0)
-                        # self.sim_world.print_current_game_state()
+                        if self.args.game_type == GameType.HEX:
+                            graph_list.append(self.sim_world.graph)
+                            state_status_list_list.append(
+                                list(map(lambda x: x.status, self.sim_world.cells)))
 
                     if reward == 1:
                         victories_per_anet[anet_1_name] += 1
@@ -104,9 +114,9 @@ class TournamentOfProgressivePolicies:
                         # print("Red (player 0, player 1 in project spec) wins")
                         victories_per_anet[anet_0_name] += 1
 
-                    # visualize_board(self.sim_world.graph, list(
-                    #     map(lambda x: x.status, self.sim_world.cells)), 0)
-                    # keep_board_visualization_visible()
+                    if self.args.visualize and last_game:
+                        visualize_board_manually(
+                            graph_list, state_status_list_list, title_prepend="{} (red) vs. {} (black): ".format(anet_0_name, anet_1_name))
 
         # Present results, sorted by ANET number
         sort_results_list = []
