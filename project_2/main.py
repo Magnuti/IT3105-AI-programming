@@ -110,8 +110,7 @@ if __name__ == "__main__":
                 state_status_list_list.append(
                     list(map(lambda x: x.status, sim_world.cells)))
 
-        # TODO try to set best player as min as well
-        if reward == 1:
+        if reward == 1:  # Black wants to max reward
             victories += 1
 
         if args.visualize:
@@ -175,8 +174,7 @@ if __name__ == "__main__":
                 state_status_list_list.append(
                     list(map(lambda x: x.status, sim_world.cells)))
 
-        # TODO try to set best player as min as well
-        if reward == 1:
+        if reward == -1:  # Red wants to min reward
             victories += 1
 
         if args.visualize:
