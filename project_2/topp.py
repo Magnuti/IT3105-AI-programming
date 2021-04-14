@@ -108,8 +108,14 @@ class TournamentOfProgressivePolicies:
                     #     map(lambda x: x.status, self.sim_world.cells)), 0)
                     # keep_board_visualization_visible()
 
+        # Present results, sorted by ANET number
+        sort_results_list = []
         for key, value in victories_per_anet.items():
-            print(key, "won", value, "times")
+            anet_num = int(key.split('_')[2])
+            sort_results_list.append([key, value, anet_num])
+        sort_results_list.sort(key=lambda x: x[2])
+        for net in sort_results_list:
+            print(net[0], "won", net[1], "times")
 
 
 if __name__ == "__main__":
