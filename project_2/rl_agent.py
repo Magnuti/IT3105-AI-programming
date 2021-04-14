@@ -101,10 +101,10 @@ class RL_agent:
             train_start = time.time()
             self.actor.train_ANET()
             train_used = time.time() - train_start
-            print("Training took {} seconds".format(train_used))
+            print("\tTraining took {} seconds".format(train_used))
 
             used = time.time() - start
-            print("This episode took {} seconds".format(used))
+            print("\tThis episode took {} seconds".format(used))
 
 
 class Actor:
@@ -112,7 +112,8 @@ class Actor:
         # since it refers to same object as RL-agent, why not just store it here
         self.sim_world = sim_world
         # TODO pass in learning rate to ANET ?
-        self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
+        self.ANET = ANET(args.neurons_per_layer, args.activation_functions,
+                         args.optimizer, args.learning_rate)
         self.ANET.cache_model_params()
         # TODO we need to pass in explore_constant, which should probably be decaying
         temp_explore_constant = 1

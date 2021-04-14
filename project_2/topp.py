@@ -29,7 +29,9 @@ class TournamentOfProgressivePolicies:
         victories_per_anet = {}
         for path in self.model_save_path.iterdir():
             anet = ANET(self.args.neurons_per_layer,
-                        self.args.activation_functions)
+                        self.args.activation_functions,
+                        self.args.optimizer,
+                        self.args.learning_rate)
             anet.load_model_path_known(path)
             anet.cache_model_params()
             anets[path.name] = anet
@@ -113,7 +115,8 @@ class TournamentOfProgressivePolicies:
 if __name__ == "__main__":
     args = Arguments()
     args.parse_arguments()
-    anet = ANET(args.neurons_per_layer, args.activation_functions)
+    anet = ANET(args.neurons_per_layer, args.activation_functions,
+                args.optimizer, args.learning_rate)
     print("Input shape:", anet.model.input_shape)
     anet.model.summary()
 
@@ -123,9 +126,12 @@ if __name__ == "__main__":
     topp = TournamentOfProgressivePolicies(args, sim_world)
 
     # Test save
-    anet_0 = ANET(args.neurons_per_layer, args.activation_functions)
-    anet_50 = ANET(args.neurons_per_layer, args.activation_functions)
-    anet_100 = ANET(args.neurons_per_layer, args.activation_functions)
+    anet_0 = ANET(args.neurons_per_layer, args.activation_functions,
+                  args.optimizer, args.learning_rate)
+    anet_50 = ANET(args.neurons_per_layer, args.activation_functions,
+                   args.optimizer, args.learning_rate)
+    anet_100 = ANET(args.neurons_per_layer, args.activation_functions,
+                    args.optimizer, args.learning_rate)
 
     anet_0.save_model(0)
     anet_50.save_model(50)
@@ -133,9 +139,12 @@ if __name__ == "__main__":
 
     # Test load
 
-    # anet_0 = ANET(args.neurons_per_layer, args.activation_functions)
-    # anet_50 = ANET(args.neurons_per_layer, args.activation_functions)
-    # anet_100 = ANET(args.neurons_per_layer, args.activation_functions)
+    # anet_0 = ANET(args.neurons_per_layer, args.activation_functions,
+    #             args.optimizer, args.learning_rate)
+    # anet_50 = ANET(args.neurons_per_layer, args.activation_functions,
+    #             args.optimizer, args.learning_rate)
+    # anet_100 = ANET(args.neurons_per_layer, args.activation_functions,
+    #             args.optimizer, args.learning_rate)
 
     # anet_0.load_model(0)
     # anet_50.load_model(50)
