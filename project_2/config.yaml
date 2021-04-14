@@ -19,7 +19,7 @@ epsilon_decay_function: exponential
 # Only used for epsilon_decay_function: exponential
 epsilon_decay: 0.9955
 
-visualize: True
+visualize: False
 
 ######################################################
 ### Nim variables ###
@@ -35,38 +35,41 @@ nim_K: 5
 ######################################################
 
 # Recommended size in the interval [3, 10]
-board_size: 4
+board_size: 5
 
 ######################################################
 ### Parameters for the actor neural network (ANET) ###
 ######################################################
 
-learning_rate: 0.01
+# Set to null to use the optimizer's default learning rate
+learning_rate: null
 
 # List of neurons in each hidden layer. Set to an empty list if no hidden
 # layers should be used. The input/output dimensions are automatically
 # calculated based on board_size.
-neurons_per_hidden_layer: [15, 15]
+neurons_per_hidden_layer: [48, 32]
 
 # Activation function for each layer (except the input layer)
 # Options [linear, sigmoid, tanh, relu, softmax]
 # For example a network with 2 hidden layers: [sigmoid, relu, softmax]
 # SoftMax is highly recommended in the output layer
+# See https://keras.io/api/layers/activations/
 activation_functions: [relu, relu, softmax]
 
 # [Adagrad, SGD, RMSProp, Adam]
 # SGD = Stochastic Gradient Descent
-optimizer: SGD
+# See https://keras.io/api/optimizers/
+optimizer: Adam
 
 # How many random cases from replay buffer to train on, per episode
-replay_buffer_selection_size: 16
+replay_buffer_selection_size: 128
 
 # The batch size the neural network should train on. The random selection
 # from the replay buffer is divided into these mini-batches.
 # Should be <= replay_buffer_selection_size
 mini_batch_size: 16
 
-epochs: 10
+epochs: 64
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
 games_to_save: 5

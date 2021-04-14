@@ -46,10 +46,11 @@ if __name__ == "__main__":
 
     # Best vs. random
     victories = 0
-    anet = ANET(args.neurons_per_layer, args.activation_functions)
-    anet.cache_model_params()
+    anet = ANET(args.neurons_per_layer, args.activation_functions,
+                args.optimizer, args.learning_rate)
     anet.load_model_path_known(
         best_model_save_path.joinpath("anet_episode_best_model"))
+    anet.cache_model_params()
 
     # TODO try best_vs_random on nim as well, may be far easier to see that
 

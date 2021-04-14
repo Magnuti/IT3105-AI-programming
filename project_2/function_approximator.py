@@ -18,28 +18,26 @@ class ANET:
     the critic).
     """
 
-    def __init__(self, neurons_per_layer, activation_functions):
-        self.neurons_per_layer = neurons_per_layer
-        self.activation_functions = activation_functions
+    def __init__(self, neurons_per_layer, activation_functions, optimizer, learning_rate):
+        optimizer = keras.optimizers.get(optimizer.value)
+        if learning_rate is not None:
+            optimizer.learning_rate.assign(learning_rate)
 
-        self.build_network()
-
-    def build_network(self, lrate=0.01, opt=keras.optimizers.SGD,
-                      loss=keras.losses.categorical_crossentropy):
-        # TODO take loss as config param
+        # Build the model
         model = keras.models.Sequential()
-
-        for i, node_count in enumerate(self.neurons_per_layer):
+        for i, node_count in enumerate(neurons_per_layer):
             if i == 0:
                 model.add(layers.Input(shape=node_count))
             else:
                 model.add(layers.Dense(
-                    node_count, activation=self.activation_functions[i - 1].value, name="Layer_{}".format(i)))
+                    node_count, activation=activation_functions[i - 1].value, name="Layer_{}".format(i)))
 
-        model.compile(optimizer=opt(lr=lrate), loss=loss, metrics=[
-                      keras.metrics.categorical_accuracy])
+        # We use MSE since Keras categorical_crossentropy takes in one-hot encoded targets
+        model.compile(optimizer=optimizer, loss="mse", metrics=[
+                      tf.keras.metrics.MeanSquaredError()])
 
         self.model = model
+        # self.model.summary()
 
     def cache_model_params(self):
         self.params_per_layer = []
@@ -108,5 +106,6 @@ class ANET:
 if __name__ == "__main__":
     args = Arguments()
     args.parse_arguments()
-    anet = ANET(args.neurons_per_layer, args.activation_functions)
+    anet = ANET(args.neurons_per_layer, args.activation_functions,
+                args.optimizer, args.learning_rate)
     anet.model.summary()
