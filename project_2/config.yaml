@@ -19,7 +19,8 @@ epsilon_decay_function: linear
 # Only used for epsilon_decay_function: exponential
 epsilon_decay: 0.97
 
-visualize: False # True or False
+visualize: True # True or False
+visualization_games: [50, 100, 150]
 
 ######################################################
 ### Nim variables ###

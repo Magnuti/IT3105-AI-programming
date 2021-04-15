@@ -4,7 +4,8 @@ import random
 
 from mcts import MonteCarloTreeSearch
 from function_approximator import ANET
-from constants import EpsilonDecayFunction
+from constants import EpsilonDecayFunction, GameType
+from visualization import visualize_board_manually
 
 
 class RL_agent:
@@ -82,18 +83,30 @@ class RL_agent:
             # TODO: remove
             print("\tepsilon:", self.epsilon)
 
-            # First action
-            self.actor.pick_next_actual_action(self.epsilon)
+            visualization = self.args.visualize and episode in self.args.visualization_games
 
             gameover = self.sim_world.get_gameover_and_reward(
-                visualization=last_episode)[0]
+                visualization=visualization)[0]
+
+            if self.args.game_type == GameType.HEX:
+                graph_list = []
+                state_status_list_list = []
 
             # For each step of the episode: do another move
             while not gameover:
 
                 self.actor.pick_next_actual_action(self.epsilon)
                 gameover, _ = self.sim_world.get_gameover_and_reward(
-                    visualization=last_episode)
+                    visualization=visualization)
+
+                if self.args.game_type == GameType.HEX and visualization:
+                    graph_list.append(self.sim_world.graph)
+                    state_status_list_list.append(
+                        list(map(lambda x: x.status, self.sim_world.cells)))
+
+            if visualization:
+                visualize_board_manually(
+                    graph_list, state_status_list_list, title_prepend="Episode {}: ".format(episode))
 
             self.actor.start_new_game()
 

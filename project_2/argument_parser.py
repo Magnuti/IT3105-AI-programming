@@ -20,6 +20,7 @@ class Arguments:
             config_data["epsilon_decay_function"])
         self.epsilon_decay = config_data["epsilon_decay"]
         self.visualize = config_data["visualize"]
+        self.visualization_games = config_data["visualization_games"]
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions
