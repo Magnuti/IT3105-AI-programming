@@ -14,6 +14,7 @@ class Arguments:
         self.board_size = config_data["board_size"]
         self.episodes = config_data["episodes"]
         self.simulations = config_data["simulations"]
+        self.explore_constant = config_data["explore_constant"]
         self.learning_rate = config_data["learning_rate"]
         self.epsilon = config_data["epsilon"]
         self.epsilon_decay_function = EpsilonDecayFunction(

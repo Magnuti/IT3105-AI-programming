@@ -287,6 +287,8 @@ class SimWorldHex(SimWorldInterface):
             We see that we can place the value 10 in two locations: [2:4] and
             [4:6], since the current player is 10
         """
+        # TODO This could be cached on the simworld for each move (in pick_move), so we don't need to do this once in simworld + once in MCTS per node. If it gives enough speed gain, it should be done
+        # Profile it by putting the call in a subfunction
         hashable_state = tuple(self.get_game_state())
 
         if hashable_state in self.child_states_cache:
@@ -342,7 +344,6 @@ class SimWorldHex(SimWorldInterface):
             cell_index = i // 2
             cell_state = self.state[i: i + 2]
 
-            # if np.array_equal(cell_state, np.array([0, 0], dtype=int)):
             if (cell_state[0] == empty_cell_array[0] and cell_state[1] == empty_cell_array[1]):
                 # Empty cell
                 continue

@@ -6,13 +6,16 @@
 game_type: hex
 
 # True or False. if False, go straight to TOPP with presaved models
-train: False
+train: True
 
 episodes: 500
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
 simulations: 666
+
+# Explore constant for UTC (TODO: could also be decaying)
+explore_constant: 1
 
 epsilon: 0.7
 
@@ -78,7 +81,7 @@ mini_batch_size: 16
 epochs: 32
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
-games_to_save: 30
+games_to_save: 5
 
 ######################################################
 ### TOURNAMENTS ###
