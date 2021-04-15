@@ -24,11 +24,7 @@ if __name__ == "__main__":
     model_save_path = pathlib.Path("saved_models")
     best_model_save_path = pathlib.Path("best_model")
 
-    # TODO temporarily
-    train = True
-    # train = False
-
-    if train:
+    if args.train:
         if(model_save_path.exists()):
             # Remove all saved models so we start of with a clean folder
             shutil.rmtree(model_save_path)

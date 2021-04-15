@@ -5,6 +5,9 @@
 # The type of game to be played [nim, hex]
 game_type: hex
 
+# True or False. if False, go straight to TOPP with presaved models
+train: False
+
 episodes: 500
 
 # How many simulations (i.e., search games) to perform per each actual move, where
@@ -19,7 +22,9 @@ epsilon_decay_function: linear
 # Only used for epsilon_decay_function: exponential
 epsilon_decay: 0.97
 
-visualize: True # True or False
+# True or False
+visualize: False
+# Episodes to visualize during training
 visualization_games: [50, 100, 150]
 
 ######################################################
