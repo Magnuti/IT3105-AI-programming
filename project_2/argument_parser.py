@@ -14,12 +14,15 @@ class Arguments:
         self.board_size = config_data["board_size"]
         self.episodes = config_data["episodes"]
         self.simulations = config_data["simulations"]
+        self.explore_constant = config_data["explore_constant"]
         self.learning_rate = config_data["learning_rate"]
         self.epsilon = config_data["epsilon"]
         self.epsilon_decay_function = EpsilonDecayFunction(
             config_data["epsilon_decay_function"])
         self.epsilon_decay = config_data["epsilon_decay"]
         self.visualize = config_data["visualize"]
+        self.visualization_games = config_data["visualization_games"]
+        self.train = config_data["train"]
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions

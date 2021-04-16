@@ -19,7 +19,7 @@ node_edgecolors = {
 }
 
 
-def visualize_board_manually(graph_list, state_status_list_list):
+def visualize_board_manually(graph_list, state_status_list_list, title_prepend=""):
     """
     This function makes it possible to navigate through the moves in the game
     with the use of the arrow keys on the keyboard.
@@ -51,7 +51,8 @@ def visualize_board_manually(graph_list, state_status_list_list):
             map(lambda x: node_edgecolors[x], state_status_list))
 
         ax.cla()
-        ax.set_title("Move number {}".format(currrent_position + 1))
+        ax.set_title(title_prepend +
+                     "Move number {}".format(currrent_position + 1))
         nx.draw(graph, pos=graph.graph['plot_pos_dict'],
                 with_labels=False, node_color=fillcolor_map, edgecolors=edgecolor_map, linewidths=3.0)
         fig.canvas.draw()
@@ -65,7 +66,7 @@ def visualize_board_manually(graph_list, state_status_list_list):
     graph = graph_list[0]
     fillcolor_map = list(map(lambda x: node_fillcolors[x], state_status_list))
     edgecolor_map = list(map(lambda x: node_edgecolors[x], state_status_list))
-    ax.set_title("Move number 1")
+    ax.set_title(title_prepend + "Move number 1")
     nx.draw(graph, pos=graph.graph['plot_pos_dict'], with_labels=False,
             node_color=fillcolor_map, edgecolors=edgecolor_map, linewidths=3.0)
 

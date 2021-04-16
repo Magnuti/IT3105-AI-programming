@@ -4,7 +4,8 @@ import random
 
 from mcts import MonteCarloTreeSearch
 from function_approximator import ANET
-from constants import EpsilonDecayFunction
+from constants import EpsilonDecayFunction, GameType
+from visualization import visualize_board_manually
 
 
 class RL_agent:
@@ -29,8 +30,6 @@ class RL_agent:
         else:
             raise NotImplementedError()
 
-        print("Epsilon decay:", self.epsilon_decay)
-
         self.actor = Actor(self.sim_world, args)
 
     def play(self):
@@ -49,7 +48,7 @@ class RL_agent:
         print("Saving every {}th episode".format(episode_save_interval))
 
         for episode in range(self.args.episodes):
-            start = time.time()
+            # start = time.time()
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
 
@@ -79,32 +78,45 @@ class RL_agent:
             if last_episode:
                 self.epsilon = 0  # Target policy for last run
 
-            print("\tepsilon:", self.epsilon)
+            # TODO: remove, rather plot the epsilons
+            # print("\tepsilon:", self.epsilon)
 
-            # First action
-            self.actor.pick_next_actual_action(self.epsilon)
+            visualization = self.args.visualize and episode in self.args.visualization_games
 
             gameover = self.sim_world.get_gameover_and_reward(
-                visualization=last_episode)[0]
+                visualization=visualization)[0]
+
+            if self.args.game_type == GameType.HEX:
+                graph_list = []
+                state_status_list_list = []
 
             # For each step of the episode: do another move
             while not gameover:
 
                 self.actor.pick_next_actual_action(self.epsilon)
                 gameover, _ = self.sim_world.get_gameover_and_reward(
-                    visualization=last_episode)
+                    visualization=visualization)
+
+                if self.args.game_type == GameType.HEX and visualization:
+                    graph_list.append(self.sim_world.graph)
+                    state_status_list_list.append(
+                        list(map(lambda x: x.status, self.sim_world.cells)))
+
+            if visualization:
+                visualize_board_manually(
+                    graph_list, state_status_list_list, title_prepend="Episode {}: ".format(episode))
 
             self.actor.start_new_game()
 
             epsilon_history.append(self.epsilon)
 
-            train_start = time.time()
+            # train_start = time.time()
             self.actor.train_ANET()
-            train_used = time.time() - train_start
-            print("Training took {} seconds".format(train_used))
+            # train_used = time.time() - train_start
+            # print("\tTraining took {} seconds".format(train_used))
 
-            used = time.time() - start
-            print("This episode took {} seconds".format(used))
+            # used = time.time() - start
+            # print("\tThis episode took {} seconds".format(used))
 
 
 class Actor:
@@ -112,12 +124,12 @@ class Actor:
         # since it refers to same object as RL-agent, why not just store it here
         self.sim_world = sim_world
         # TODO pass in learning rate to ANET ?
-        self.ANET = ANET(args.neurons_per_layer, args.activation_functions)
+        self.ANET = ANET(args.neurons_per_layer, args.activation_functions,
+                         args.optimizer, args.learning_rate)
         self.ANET.cache_model_params()
-        # TODO we need to pass in explore_constant, which should probably be decaying
-        temp_explore_constant = 1
+
         self.MCTS = MonteCarloTreeSearch(
-            explore_constant=temp_explore_constant, simworld=sim_world, ANET=self.ANET, args=args)
+            simworld=sim_world, ANET=self.ANET, args=args)
         self.replay_buffer = []
         self.args = args
 
@@ -159,4 +171,5 @@ class Actor:
         history = self.ANET.fit(
             x, y, batch_size=self.args.mini_batch_size, epochs=self.args.epochs)
 
+        # Cache the params of ANET, so forward can be done through numpy
         self.ANET.cache_model_params()

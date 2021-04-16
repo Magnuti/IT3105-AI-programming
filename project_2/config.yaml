@@ -5,21 +5,30 @@
 # The type of game to be played [nim, hex]
 game_type: hex
 
-episodes: 150
+# True or False. if False, go straight to TOPP with presaved models
+train: True
+
+episodes: 500
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
-simulations: 500
+simulations: 666
 
-epsilon: 1
+# Explore constant for UTC (TODO: could also be decaying)
+explore_constant: 1
+
+epsilon: 0.7
 
 # How epsilon should decay [exponential, reversed_sigmoid, linear]
 epsilon_decay_function: linear
 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
 # Only used for epsilon_decay_function: exponential
-epsilon_decay: 0.9955
+epsilon_decay: 0.97
 
+# True or False
 visualize: False
+# Episodes to visualize during training
+visualization_games: [50, 100, 150]
 
 ######################################################
 ### Nim variables ###
@@ -41,7 +50,8 @@ board_size: 6
 ### Parameters for the actor neural network (ANET) ###
 ######################################################
 
-learning_rate: 0.01
+# Set to null to use the optimizer's default learning rate
+learning_rate: null
 
 # List of neurons in each hidden layer. Set to an empty list if no hidden
 # layers should be used. The input/output dimensions are automatically
@@ -52,10 +62,12 @@ neurons_per_hidden_layer: [64, 32]
 # Options [linear, sigmoid, tanh, relu, softmax]
 # For example a network with 2 hidden layers: [sigmoid, relu, softmax]
 # SoftMax is highly recommended in the output layer
+# See https://keras.io/api/layers/activations/
 activation_functions: [relu, relu, softmax]
 
 # [Adagrad, SGD, RMSProp, Adam]
 # SGD = Stochastic Gradient Descent
+# See https://keras.io/api/optimizers/
 optimizer: Adam
 
 # How many random cases from replay buffer to train on, per episode
@@ -66,7 +78,7 @@ replay_buffer_selection_size: 128
 # Should be <= replay_buffer_selection_size
 mini_batch_size: 16
 
-epochs: 64
+epochs: 32
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
 games_to_save: 5
@@ -76,4 +88,4 @@ games_to_save: 5
 ######################################################
 # The number of games to be played between any two ANET-based agents that
 # meet during the round-robin play of the TOPP.
-games_between_agents: 5
+games_between_agents: 8

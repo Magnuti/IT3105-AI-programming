@@ -1,6 +1,7 @@
 .vscode/
 saved_models/
 best_model/
+pretrained_models/
 my_saved_models/
 server.crt
 

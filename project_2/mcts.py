@@ -10,13 +10,13 @@ class MonteCarloTreeSearch:
 
     '''
 
-    def __init__(self, explore_constant, simworld, ANET, args):
+    def __init__(self, simworld, ANET, args):
         '''
         args:
             simworld:  actual_simworld, which state is reset at end of search_next_actual_move()
         '''
 
-        self.explore_constant = explore_constant
+        self.explore_constant = args.explore_constant
         self.simworld = simworld
         self.simulations = args.simulations
         self.ANET = ANET
@@ -36,6 +36,8 @@ class MonteCarloTreeSearch:
             train_case: tuple with root state and target distribution which is
             to be added into the replay buffer.
         """
+
+        # Set root + prune
         if not self.root:
             # This only happens at beginning of an episode, when the tree is empty and the root is not set
             self.root = self.make_node(self.simworld.get_game_state())
@@ -71,8 +73,8 @@ class MonteCarloTreeSearch:
     # using UCT algorithm
     def tree_search(self):
         previous_node = None
-        # This only gets set to False if a gameover node that already exists in the tree is picked.
-        # This pre-existing node would have children (it's expanded) but all children are None
+        # This only gets set to False if a gameover-node that already exists in the tree is picked.
+        # This pre-existing gameover-node is expanded already, but no children are attached to it
         continue_search = True
         tree_search_path = []
         while continue_search:
@@ -105,13 +107,14 @@ class MonteCarloTreeSearch:
 
     def tree_select_move(self, node, num_child_states):
         if self.black_to_play(node):
-            # Get the greedy best-action coice for player 1
-            # the math here would be better to do in np, but need to be explicit to be able to cythonize
+            # Get the best-action choice for player 1
             values = []
             for a in range(num_child_states):
                 if node.children[a] is None:
                     values.append(-math.inf)
                     continue
+
+                # gives higher explore bonus if the action has less action_visit
                 utc = self.explore_constant * \
                     math.sqrt(math.log(node.visit) /
                               (1 + node.action_visit[a]))
@@ -125,6 +128,7 @@ class MonteCarloTreeSearch:
                     values.append(math.inf)
                     continue
 
+                # gives higher explore bonus if the action has less action_visit
                 utc = self.explore_constant * \
                     math.sqrt(math.log(node.visit) /
                               (1 + node.action_visit[a]))
@@ -222,10 +226,11 @@ class MonteCarloTreeSearch:
 
             a = parent_node.children.index(child_node)  # Action index
 
-            # Update N(s,a), E, Q(s, a)
+            # Update N(s,a), E(s, a), Q(s, a)
             # E_a is accumulated reward for action (over all searches in this tree)
             parent_node.action_visit[a] += 1
             parent_node.action_cumreward[a] += z
+            # Nodes with high visits will have high cumreward. By dividing we try to answer: "how much did action a contribute?"
             parent_node.action_value[a] = parent_node.action_cumreward[a] / \
                 parent_node.action_visit[a]
 

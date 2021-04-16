@@ -1,7 +1,11 @@
-import tensorflow as tf
-from tensorflow import keras
-import numpy as np
+import os  # nopep8
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
+import numpy as np
+from tensorflow import keras
+import tensorflow as tf
+
+from constants import GameType
 from visualization import visualize_board_manually
 from sim_world import SimWorldNim, SimWorldHex
 from argument_parser import Arguments
@@ -29,7 +33,9 @@ class TournamentOfProgressivePolicies:
         victories_per_anet = {}
         for path in self.model_save_path.iterdir():
             anet = ANET(self.args.neurons_per_layer,
-                        self.args.activation_functions)
+                        self.args.activation_functions,
+                        self.args.optimizer,
+                        self.args.learning_rate)
             anet.load_model_path_known(path)
             anet.cache_model_params()
             anets[path.name] = anet
@@ -53,11 +59,16 @@ class TournamentOfProgressivePolicies:
 
                 starting_player = 1
                 for game in range(games_between_agents):
+                    last_game = game == games_between_agents - 1
                     # print("\nPlaying a game between {} and {}".format(
                     # anet_0_name, anet_1_name))
                     starting_player = 1 - starting_player  # Alternate between 0 and 1
                     # Play a game between model_0 and model_1
                     self.sim_world.reset_game(starting_player)
+
+                    if self.args.game_type == GameType.HEX:
+                        graph_list = []
+                        state_status_list_list = []
 
                     gameover, reward = self.sim_world.get_gameover_and_reward()
                     while not gameover:
@@ -88,12 +99,13 @@ class TournamentOfProgressivePolicies:
                         move_index = np.argmax(output_propabilities)
                         self.sim_world.pick_move(child_states[move_index])
 
-                        gameover, reward = self.sim_world.get_gameover_and_reward()
+                        gameover, reward = self.sim_world.get_gameover_and_reward(
+                            visualization=True)
 
-                        # TODO fix viz manually
-                        # visualize_board(self.sim_world.graph, list(
-                        #     map(lambda x: x.status, self.sim_world.cells)), 0)
-                        # self.sim_world.print_current_game_state()
+                        if self.args.game_type == GameType.HEX:
+                            graph_list.append(self.sim_world.graph)
+                            state_status_list_list.append(
+                                list(map(lambda x: x.status, self.sim_world.cells)))
 
                     if reward == 1:
                         victories_per_anet[anet_1_name] += 1
@@ -102,18 +114,25 @@ class TournamentOfProgressivePolicies:
                         # print("Red (player 0, player 1 in project spec) wins")
                         victories_per_anet[anet_0_name] += 1
 
-                    # visualize_board(self.sim_world.graph, list(
-                    #     map(lambda x: x.status, self.sim_world.cells)), 0)
-                    # keep_board_visualization_visible()
+                    if self.args.visualize and last_game:
+                        visualize_board_manually(
+                            graph_list, state_status_list_list, title_prepend="{} (red) vs. {} (black): ".format(anet_0_name, anet_1_name))
 
+        # Present results, sorted by ANET number
+        sort_results_list = []
         for key, value in victories_per_anet.items():
-            print(key, "won", value, "times")
+            anet_num = int(key.split('_')[2])
+            sort_results_list.append([key, value, anet_num])
+        sort_results_list.sort(key=lambda x: x[2])
+        for net in sort_results_list:
+            print(net[0], "won", net[1], "times")
 
 
 if __name__ == "__main__":
     args = Arguments()
     args.parse_arguments()
-    anet = ANET(args.neurons_per_layer, args.activation_functions)
+    anet = ANET(args.neurons_per_layer, args.activation_functions,
+                args.optimizer, args.learning_rate)
     print("Input shape:", anet.model.input_shape)
     anet.model.summary()
 
@@ -123,9 +142,12 @@ if __name__ == "__main__":
     topp = TournamentOfProgressivePolicies(args, sim_world)
 
     # Test save
-    anet_0 = ANET(args.neurons_per_layer, args.activation_functions)
-    anet_50 = ANET(args.neurons_per_layer, args.activation_functions)
-    anet_100 = ANET(args.neurons_per_layer, args.activation_functions)
+    anet_0 = ANET(args.neurons_per_layer, args.activation_functions,
+                  args.optimizer, args.learning_rate)
+    anet_50 = ANET(args.neurons_per_layer, args.activation_functions,
+                   args.optimizer, args.learning_rate)
+    anet_100 = ANET(args.neurons_per_layer, args.activation_functions,
+                    args.optimizer, args.learning_rate)
 
     anet_0.save_model(0)
     anet_50.save_model(50)
@@ -133,9 +155,12 @@ if __name__ == "__main__":
 
     # Test load
 
-    # anet_0 = ANET(args.neurons_per_layer, args.activation_functions)
-    # anet_50 = ANET(args.neurons_per_layer, args.activation_functions)
-    # anet_100 = ANET(args.neurons_per_layer, args.activation_functions)
+    # anet_0 = ANET(args.neurons_per_layer, args.activation_functions,
+    #             args.optimizer, args.learning_rate)
+    # anet_50 = ANET(args.neurons_per_layer, args.activation_functions,
+    #             args.optimizer, args.learning_rate)
+    # anet_100 = ANET(args.neurons_per_layer, args.activation_functions,
+    #             args.optimizer, args.learning_rate)
 
     # anet_0.load_model(0)
     # anet_50.load_model(50)

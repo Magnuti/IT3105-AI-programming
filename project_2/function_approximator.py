@@ -18,28 +18,26 @@ class ANET:
     the critic).
     """
 
-    def __init__(self, neurons_per_layer, activation_functions):
-        self.neurons_per_layer = neurons_per_layer
-        self.activation_functions = activation_functions
+    def __init__(self, neurons_per_layer, activation_functions, optimizer, learning_rate):
+        optimizer = keras.optimizers.get(optimizer.value)
+        if learning_rate is not None:
+            optimizer.learning_rate.assign(learning_rate)
 
-        self.build_network()
-
-    def build_network(self, lrate=0.01, opt=keras.optimizers.SGD,
-                      loss=keras.losses.categorical_crossentropy):
-        # TODO take loss as config param
+        # Build the model
         model = keras.models.Sequential()
-
-        for i, node_count in enumerate(self.neurons_per_layer):
+        for i, node_count in enumerate(neurons_per_layer):
             if i == 0:
                 model.add(layers.Input(shape=node_count))
             else:
                 model.add(layers.Dense(
-                    node_count, activation=self.activation_functions[i - 1].value, name="Layer_{}".format(i)))
+                    node_count, activation=activation_functions[i - 1].value, name="Layer_{}".format(i)))
 
-        model.compile(optimizer=opt(lr=lrate), loss=loss, metrics=[
-                      keras.metrics.categorical_accuracy])
+        # We use MSE since Keras categorical_crossentropy takes in/gives one-hot encoded targets
+        model.compile(optimizer=optimizer, loss="mse", metrics=[
+                      tf.keras.metrics.MeanSquaredError()])
 
         self.model = model
+        # self.model.summary()
 
     def cache_model_params(self):
         self.params_per_layer = []
@@ -51,40 +49,17 @@ class ANET:
                 (params[0], params[1], activation_function))
 
     def forward(self, features):
-        # print(features.shape)
-        # if len(features.shape) == 1:
-        # Reshape from (k, ) to (1, k) since that means a batch size of 1
-        # features = features.reshape((1, features.shape[0]))
         features = np.expand_dims(features, axis=0)
-        # print(features.shape)
-
-        # with tf.device('/CPU:0'):
-        # return self.model(features)
-        # keras_output = self.model(features)
-
         x = features
-        for i, layer in enumerate(self.model.layers):
-            # print("Layer", i)
-            # params = layer.get_weights()
+        for i in range(len(self.model.layers)):
             params = self.params_per_layer[i]
             weights = params[0]
-            # print("Input", x.shape, type(x))
-            # print("Weight", weights.shape, type(weights))
             bias = params[1]
-            # print("Bias", bias.shape, type(bias))
-            # af = layer.get_config()["activation"]
-            # activation_function = tf.keras.activations.get(af)
             activation_function = params[2]
-            # print(activation_function)
             z = np.matmul(x, weights) + bias
-            z = tf.convert_to_tensor(z)  # ? can we avoid this?
-            # print(type(z))
+            # TODO ? can we avoid this?
+            z = tf.convert_to_tensor(z)
             x = activation_function(z)
-
-        # print(keras_output)
-        # print(x)
-
-        # exit()
         return x
 
     def fit(self, x, y, batch_size, epochs, verbose=0):
@@ -108,5 +83,6 @@ class ANET:
 if __name__ == "__main__":
     args = Arguments()
     args.parse_arguments()
-    anet = ANET(args.neurons_per_layer, args.activation_functions)
+    anet = ANET(args.neurons_per_layer, args.activation_functions,
+                args.optimizer, args.learning_rate)
     anet.model.summary()
