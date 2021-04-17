@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import math
+import time
 
 
 range_36 = range(36)
@@ -40,6 +41,8 @@ class MonteCarloTreeSearch:
             to be added into the replay buffer.
         """
 
+        start = time.time()
+
         # Set root + prune
         if not self.root:
             # This only happens at beginning of an episode, when the tree is empty and the root is not set
@@ -53,6 +56,8 @@ class MonteCarloTreeSearch:
 
         # Run simulations
         for _ in range(self.simulations):
+            if time.time() - start > 5:
+                break
             leaf_node, tree_search_path = self.tree_search()
             self.simworld.pick_move(leaf_node.state)
             z = self.leaf_eval(epsilon)
@@ -70,6 +75,8 @@ class MonteCarloTreeSearch:
         target_dist = np.array(self.root.action_visit, dtype=float)
         target_norm = np.sum(target_dist)
         target_dist /= target_norm
+
+        # print('Simulations took: ', time.time() - start)
 
         return self.root.children[move_num].state, (self.root.state, target_dist)
 
