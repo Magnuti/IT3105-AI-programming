@@ -23,6 +23,8 @@ class Arguments:
         self.visualize = config_data["visualize"]
         self.visualization_games = config_data["visualization_games"]
         self.train = config_data["train"]
+        self.sim_timelimit = config_data["sim_timelimit"]
+        self.rollout_explore = config_data["rollout_explore"]
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions

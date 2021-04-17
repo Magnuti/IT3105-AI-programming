@@ -13,10 +13,13 @@ episodes: 600
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
 simulations: 500
+sim_timelimit: 5
 
 # Explore constant for UTC (TODO: could also be decaying)
 explore_constant: 1
 
+# 0 = random, 1 = weighted choice based on output_dist
+rollout_explore: 1
 epsilon: 1
 
 # How epsilon should decay [exponential, reversed_sigmoid, linear]

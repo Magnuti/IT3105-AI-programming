@@ -28,6 +28,7 @@ class MonteCarloTreeSearch:
             args.neurons_per_layer) - 1]
 
         self.start_new_game()
+        self.args = args
 
     def start_new_game(self):
         self.root = None
@@ -56,7 +57,7 @@ class MonteCarloTreeSearch:
 
         # Run simulations
         for _ in range(self.simulations):
-            if time.time() - start > 5:
+            if time.time() - start > self.args.sim_timelimit:
                 break
             leaf_node, tree_search_path = self.tree_search()
             self.simworld.pick_move(leaf_node.state)
@@ -200,29 +201,29 @@ class MonteCarloTreeSearch:
             child_states = self.simworld.get_child_states()
 
             if random.random() < epsilon:
+                if self.args.rollout_explore == 0:
+                    # Make completely random choice (including the best action)
+                    legal_child_states = []
+                    for state in child_states:
+                        if state is not None:
+                            legal_child_states.append(state)
+                    choice = random.choice(legal_child_states)
+                    self.simworld.pick_move(choice)
+                else:
+                    # Weighted choice
+                    output_propabilities = self.ANET.forward(
+                        self.simworld.get_game_state()).numpy()[0]
+                    # Set illegal actions to 0 probability
+                    for i, state in enumerate(child_states):
+                        if state is None:
+                            output_propabilities[i] = 0.0
+                    # Normalize the new probabilities
+                    output_propabilities /= sum(output_propabilities)
 
-                # ### Make completely random choice (including the best action)
-                # legal_child_states = []
-                # for state in child_states:
-                #     if state is not None:
-                #         legal_child_states.append(state)
-                # choice = random.choice(legal_child_states)
-                # self.simworld.pick_move(choice)
-
-                # ### Weighted choice instead
-                output_propabilities = self.ANET.forward(
-                    self.simworld.get_game_state()).numpy()[0]
-                # Set illegal actions to 0 probability
-                for i, state in enumerate(child_states):
-                    if state is None:
-                        output_propabilities[i] = 0.0
-                # Normalize the new probabilities
-                output_propabilities /= sum(output_propabilities)
-
-                # TODO: hardcoded for size 6 board
-                move_index = random.choices(
-                    range_36, weights=output_propabilities, k=1)[0]
-                self.simworld.pick_move(child_states[move_index])
+                    # TODO: hardcoded for size 6 board
+                    move_index = random.choices(
+                        range_36, weights=output_propabilities, k=1)[0]
+                    self.simworld.pick_move(child_states[move_index])
 
             else:
                 # Make greedy choice
