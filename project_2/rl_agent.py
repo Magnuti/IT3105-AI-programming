@@ -48,7 +48,7 @@ class RL_agent:
         print("Saving every {}th episode".format(episode_save_interval))
 
         for episode in range(self.args.episodes):
-            # start = time.time()
+            start = time.time()
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
 
@@ -79,7 +79,7 @@ class RL_agent:
                 self.epsilon = 0  # Target policy for last run
 
             # TODO: remove, rather plot the epsilons
-            # print("\tepsilon:", self.epsilon)
+            print("\tepsilon:", self.epsilon)
 
             visualization = self.args.visualize and episode in self.args.visualization_games
 
@@ -115,8 +115,8 @@ class RL_agent:
             # train_used = time.time() - train_start
             # print("\tTraining took {} seconds".format(train_used))
 
-            # used = time.time() - start
-            # print("\tThis episode took {} seconds".format(used))
+            used = time.time() - start
+            print("\tThis episode took {} seconds".format(used))
 
 
 class Actor:

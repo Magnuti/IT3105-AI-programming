@@ -40,6 +40,5 @@ if __name__ == "__main__":
                              best_model_save_path)
         _RL_agent.play()
 
-        topp = TournamentOfProgressivePolicies(
-            args, sim_world, model_save_path)
-        topp.round_robin_tournament(args.games_between_agents)
+    topp = TournamentOfProgressivePolicies(args, sim_world, model_save_path)
+    topp.round_robin_tournament(args.games_between_agents)

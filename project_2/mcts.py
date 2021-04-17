@@ -3,6 +3,9 @@ import random
 import math
 
 
+range_36 = range(36)
+
+
 class MonteCarloTreeSearch:
     '''
     tree_representation
@@ -190,14 +193,30 @@ class MonteCarloTreeSearch:
             child_states = self.simworld.get_child_states()
 
             if random.random() < epsilon:
-                # Make random choice (including the best action)
-                legal_child_states = []
-                for state in child_states:
-                    if state is not None:
-                        legal_child_states.append(state)
 
-                choice = random.choice(legal_child_states)
-                self.simworld.pick_move(choice)
+                # ### Make completely random choice (including the best action)
+                # legal_child_states = []
+                # for state in child_states:
+                #     if state is not None:
+                #         legal_child_states.append(state)
+                # choice = random.choice(legal_child_states)
+                # self.simworld.pick_move(choice)
+
+                # ### Weighted choice instead
+                output_propabilities = self.ANET.forward(
+                    self.simworld.get_game_state()).numpy()[0]
+                # Set illegal actions to 0 probability
+                for i, state in enumerate(child_states):
+                    if state is None:
+                        output_propabilities[i] = 0.0
+                # Normalize the new probabilities
+                output_propabilities /= sum(output_propabilities)
+
+                # TODO: hardcoded for size 6 board
+                move_index = random.choices(
+                    range_36, weights=output_propabilities, k=1)[0]
+                self.simworld.pick_move(child_states[move_index])
+
             else:
                 # Make greedy choice
 

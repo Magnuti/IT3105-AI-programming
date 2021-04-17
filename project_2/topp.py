@@ -1,15 +1,11 @@
-import os  # nopep8
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-import numpy as np
-from tensorflow import keras
-import tensorflow as tf
-
-from constants import GameType
-from visualization import visualize_board_manually
-from sim_world import SimWorldNim, SimWorldHex
-from argument_parser import Arguments
 from function_approximator import ANET
+from argument_parser import Arguments
+from sim_world import SimWorldNim, SimWorldHex
+from visualization import visualize_board_manually
+from constants import GameType
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
 
 
 class TournamentOfProgressivePolicies:
@@ -121,7 +117,7 @@ class TournamentOfProgressivePolicies:
         # Present results, sorted by ANET number
         sort_results_list = []
         for key, value in victories_per_anet.items():
-            anet_num = int(key.split('_')[2])
+            anet_num = int(key.split('_')[-1])
             sort_results_list.append([key, value, anet_num])
         sort_results_list.sort(key=lambda x: x[2])
         for net in sort_results_list:
