@@ -5,11 +5,17 @@ import numpy as np
 from BasicClientActorAbs import BasicClientActorAbs
 from sim_world import SimWorldHex
 from function_approximator import ANET
+from argument_parser import Arguments
 
 sim_world = SimWorldHex(6, False)
 save_path = pathlib.Path("oht_model")
+args = Arguments()
+args.parse_arguments()
 
-anet = ANET([], [])  # TODO pull the build_model method to its own method
+anet = ANET(args.neurons_per_layer,
+            args.activation_functions,
+            args.optimizer,
+            args.learning_rate)
 anet.load_model_path_known(save_path.joinpath("my_oht_model"))
 anet.cache_model_params()
 
