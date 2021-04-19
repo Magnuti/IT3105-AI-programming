@@ -5,6 +5,7 @@ pretrained_models/
 pretrained_models_oht/
 my_saved_models/
 oht_model/
+project_2/oht_model/my_oht_model/variables/
 server.crt
 
 # Byte-compiled / optimized / DLL files
