@@ -143,10 +143,10 @@ class Actor:
         self.MCTS.start_new_game()
 
     def train_ANET(self, plot=False):
-        if len(self.replay_buffer) > 256:
+        if len(self.replay_buffer) > self.args.replay_buffer_size:
             # TODO may take 256 as config param
             # Drop old training cases when the replay buffer reaches a size of 256
-            from_index = len(self.replay_buffer) - 256
+            from_index = len(self.replay_buffer) - self.args.replay_buffer_size
             self.replay_buffer = self.replay_buffer[from_index:]
 
         if len(self.replay_buffer) <= self.args.replay_buffer_selection_size:

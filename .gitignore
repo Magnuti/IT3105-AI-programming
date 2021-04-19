@@ -4,6 +4,7 @@ best_model/
 pretrained_models/
 pretrained_models_oht/
 my_saved_models/
+oht_model/
 server.crt
 
 # Byte-compiled / optimized / DLL files
@@ -135,3 +136,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+project_2/oht_model/my_oht_model/saved_model.pb
+project_2/oht_model/my_oht_model/saved_model.pb
+project_2/oht_model/my_oht_model/variables/variables.data-00000-of-00001
+project_2/oht_model/my_oht_model/variables/variables.index

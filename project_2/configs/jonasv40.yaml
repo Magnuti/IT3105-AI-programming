@@ -6,16 +6,17 @@
 game_type: hex
 
 # True or False. if False, go straight to TOPP with presaved models
-train: False
+train: True
 
-episodes: 25
+episodes: 600
 
 # How many simulations (i.e., search games) to perform per each actual move, where
 # one simulation is a tree search followed by a rollout.
 simulations: 500
-sim_timelimit: 5
+sim_timelimit: 6
 
 # Explore constant for UTC, not used when dynamic explore bonus (c) is True
+explore_constant: 1.4
 # True | False
 dynamic_explore_bonus: True
 
@@ -55,19 +56,19 @@ board_size: 6
 ######################################################
 
 # Set to null to use the optimizer's default learning rate
-learning_rate: 0.01
+learning_rate: null
 
 # List of neurons in each hidden layer. Set to an empty list if no hidden
 # layers should be used. The input/output dimensions are automatically
 # calculated based on board_size.
-neurons_per_hidden_layer: [64, 32]
+neurons_per_hidden_layer: [144, 72, 36]
 
 # Activation function for each layer (except the input layer)
 # Options [linear, sigmoid, tanh, relu, softmax]
 # For example a network with 2 hidden layers: [sigmoid, relu, softmax]
 # SoftMax is highly recommended in the output layer
 # See https://keras.io/api/layers/activations/
-activation_functions: [relu, relu, softmax]
+activation_functions: [relu, relu, relu, softmax]
 
 # [Adagrad, SGD, RMSProp, Adam]
 # SGD = Stochastic Gradient Descent
@@ -83,14 +84,14 @@ replay_buffer_selection_size: 128
 # Should be <= replay_buffer_selection_size
 mini_batch_size: 16
 
-epochs: 10
+epochs: 16
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
-games_to_save: 5
+games_to_save: 20
 
 ######################################################
 ### TOURNAMENTS ###
 ######################################################
 # The number of games to be played between any two ANET-based agents that
 # meet during the round-robin play of the TOPP.
-games_between_agents: 100
+games_between_agents: 20

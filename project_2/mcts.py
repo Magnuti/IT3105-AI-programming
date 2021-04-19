@@ -117,6 +117,15 @@ class MonteCarloTreeSearch:
         return previous_node, tree_search_path
 
     def tree_select_move(self, node, num_child_states):
+
+        # Dynamic C-value (https://pubs.rsc.org/en/content/articlelanding/2020/SC/d0sc04184j#!divAbstract)
+        # also adds a 2* inside both the sqrt below, ref: paper
+        if self.args.dynamic_explore_bonus:
+            self.explore_constant = max(node.action_value) / 2
+            boost = 2
+        else:
+            boost = 1
+
         if self.black_to_play(node):
             # Get the best-action choice for player 1
             values = []
@@ -127,7 +136,7 @@ class MonteCarloTreeSearch:
 
                 # gives higher explore bonus if the action has less action_visit
                 utc = self.explore_constant * \
-                    math.sqrt(math.log(node.visit) /
+                    math.sqrt(boost*math.log(node.visit) /
                               (1 + node.action_visit[a]))
                 values.append(node.action_value[a] + utc)
             action_chosen = values.index(max(values))
@@ -141,7 +150,7 @@ class MonteCarloTreeSearch:
 
                 # gives higher explore bonus if the action has less action_visit
                 utc = self.explore_constant * \
-                    math.sqrt(math.log(node.visit) /
+                    math.sqrt(boost*math.log(node.visit) /
                               (1 + node.action_visit[a]))
                 values.append(node.action_value[a] - utc)
             action_chosen = values.index(min(values))

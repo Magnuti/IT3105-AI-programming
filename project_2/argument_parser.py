@@ -25,6 +25,8 @@ class Arguments:
         self.train = config_data["train"]
         self.sim_timelimit = config_data["sim_timelimit"]
         self.rollout_explore = config_data["rollout_explore"]
+        self.dynamic_explore_bonus = config_data["dynamic_explore_bonus"]
+        self.replay_buffer_size = config_data["replay_buffer_size"]
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions
