@@ -6,7 +6,7 @@
 game_type: hex
 
 # True or False. if False, go straight to TOPP with presaved models
-train: False
+train: True
 
 episodes: 600
 
@@ -16,24 +16,21 @@ simulations: 500
 sim_timelimit: 6
 
 # Explore constant for UTC, not used when dynamic explore bonus (c) is True
-explore_constant: 1.4
+explore_constant: 1
 # True | False
-dynamic_explore_bonus: False
+dynamic_explore_bonus: True
 
 # 0 = random, 1 = weighted choice based on output_dist
 rollout_explore: 1
 epsilon: 1
 
 # How epsilon should decay [exponential, reversed_sigmoid, linear]
-epsilon_decay_function: linear
+epsilon_decay_function: reversed_sigmoid
 # The rate in which the epsilon decreases as given by e <- e * epsilon_decay
 # Only used for epsilon_decay_function: exponential
-epsilon_decay: 0.97
+epsilon_decay: 0.9955
 
-# True or False
 visualize: False
-# Episodes to visualize during training
-visualization_games: [50, 100, 150]
 
 ######################################################
 ### Nim variables ###
@@ -49,42 +46,39 @@ nim_K: 5
 ######################################################
 
 # Recommended size in the interval [3, 10]
-board_size: 6
+board_size: 3
 
 ######################################################
 ### Parameters for the actor neural network (ANET) ###
 ######################################################
 
-# Set to null to use the optimizer's default learning rate
-learning_rate: null
+learning_rate: 0.01
 
 # List of neurons in each hidden layer. Set to an empty list if no hidden
 # layers should be used. The input/output dimensions are automatically
 # calculated based on board_size.
-neurons_per_hidden_layer: [144, 72]
+neurons_per_hidden_layer: [64, 32]
 
 # Activation function for each layer (except the input layer)
 # Options [linear, sigmoid, tanh, relu, softmax]
 # For example a network with 2 hidden layers: [sigmoid, relu, softmax]
 # SoftMax is highly recommended in the output layer
-# See https://keras.io/api/layers/activations/
 activation_functions: [relu, relu, softmax]
 
 # [Adagrad, SGD, RMSProp, Adam]
 # SGD = Stochastic Gradient Descent
-# See https://keras.io/api/optimizers/
 optimizer: Adam
 
-replay_buffer_size: 508
+replay_buffer_size: 762
 # How many random cases from replay buffer to train on, per episode
 replay_buffer_selection_size: 128
 
 # The batch size the neural network should train on. The random selection
 # from the replay buffer is divided into these mini-batches.
 # Should be <= replay_buffer_selection_size
-mini_batch_size: 32
+mini_batch_size: 16
 
-epochs: 16
+epochs: 64
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
 games_to_save: 20

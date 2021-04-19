@@ -81,7 +81,7 @@ mini_batch_size: 16
 epochs: 64
 
 # The number of ANETs to be cached in preparation for a Tournament of Progressive Policies (TOPP).
-games_to_save: 5
+games_to_save: 20
 
 ######################################################
 ### TOURNAMENTS ###
