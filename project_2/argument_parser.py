@@ -27,6 +27,8 @@ class Arguments:
         self.rollout_explore = config_data["rollout_explore"]
         self.dynamic_explore_bonus = config_data["dynamic_explore_bonus"]
         self.replay_buffer_size = config_data["replay_buffer_size"]
+        self.continue_training = config_data["continue_training"]
+        self.continue_from = int(config_data["continue_from"])
 
         self.neurons_per_layer = config_data["neurons_per_hidden_layer"]
         # Add the input/output dimensions

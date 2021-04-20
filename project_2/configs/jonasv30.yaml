@@ -17,7 +17,7 @@ sim_timelimit: 5
 
 # Explore constant for UTC, not used when dynamic explore bonus (c) is True
 # True | False
-dynamic_explore_bonus: True
+dynamic_explore_bonus: False
 
 # 0 = random, 1 = weighted choice based on output_dist
 rollout_explore: 1

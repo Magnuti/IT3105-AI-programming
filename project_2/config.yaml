@@ -6,7 +6,12 @@
 game_type: hex
 
 # True or False. if False, go straight to TOPP with presaved models
-train: True
+train: False
+
+# This loads the specified model and continues with that one
+continue_training: False
+# Episode-model to load
+continue_from: 186
 
 episodes: 600
 

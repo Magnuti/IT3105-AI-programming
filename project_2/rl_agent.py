@@ -6,6 +6,7 @@ from mcts import MonteCarloTreeSearch
 from function_approximator import ANET
 from constants import EpsilonDecayFunction, GameType
 from visualization import visualize_board_manually
+import pathlib
 
 
 class RL_agent:
@@ -47,7 +48,10 @@ class RL_agent:
         episode_save_interval[-1] = self.args.episodes - 1
         print("Saving every {}th episode".format(episode_save_interval))
 
-        for episode in range(self.args.episodes):
+        start_from = 0
+        if self.args.continue_training:
+            start_from = self.args.continue_from + 1
+        for episode in range(start_from, self.args.episodes):
             start = time.time()
             starting_player = 1 - starting_player  # Alternate between 0 and 1
             self.sim_world.reset_game(starting_player)
@@ -122,16 +126,20 @@ class RL_agent:
 class Actor:
     def __init__(self, sim_world, args):
         # since it refers to same object as RL-agent, why not just store it here
+        self.args = args
         self.sim_world = sim_world
-        # TODO pass in learning rate to ANET ?
         self.ANET = ANET(args.neurons_per_layer, args.activation_functions,
                          args.optimizer, args.learning_rate)
+
+        if self.args.continue_training:
+            save_path = pathlib.Path("saved_models")
+            self.ANET.load_model_path_known(save_path.joinpath(
+                "anet_episode_" + str(self.args.continue_from)))
         self.ANET.cache_model_params()
 
         self.MCTS = MonteCarloTreeSearch(
             simworld=sim_world, ANET=self.ANET, args=args)
         self.replay_buffer = []
-        self.args = args
 
     # assuming that the current state is already picked in simworld
     def pick_next_actual_action(self, epsilon):
